@@ -42,6 +42,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv(
 )
 
 db.init_app(app)
+with app.app_context():
+    db.create_all()
 migrate=Migrate(app,db)
 lm.login_view='login'
 
