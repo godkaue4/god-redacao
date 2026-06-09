@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>cadastrar</title>
+<style>
+        /* 1. variáveis de cor */
+        :root {
+            --bg:      #04050d;
+            --surface: #0d1120;
+            --border:  #1e2640;
+            --accent:  #4f46e5;
+            --gold:    #f59e0b;
+            --text:    #f1f5f9;
+            --muted:   #64748b;
+        }
+
+        /* 2. fundo escuro + centraliza com flexbox */
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* 3. card centralizado */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        /* 4. título estilizado */
+        h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+        h1 span { color: var(--gold); }
+
+        /* 5. campos de input */
+        .field { margin-bottom: 16px; }
+        .field label {
+            display: block;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--muted);
+            margin-bottom: 6px;
+        }
+        .field input {
+            width: 100%;
+            background: #121828;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 11px 16px;
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.9rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .field input:focus { border-color: var(--accent); }
+
+        /* 6. botão */
+        .btn {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, var(--accent), #6366f1);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 0.95rem;
+            font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(99,102,241,0.3);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 30px rgba(99,102,241,0.5);
+        }
+
+        /* 7. link de rodapé */
+        .footer-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: var(--muted);
+        }
+        .footer-link a { color: var(--accent); text-decoration: none; }
+        .footer-link a:hover { color: var(--text); }
+
+        /* 8. erro */
+        .erro {
+            background: rgba(248,113,113,0.1);
+            border: 1px solid rgba(248,113,113,0.3);
+            color: #f87171;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+        }
+    </style>
+</head>
+<body>
+     <div class="card">
+      <h2>CADASTRAR NO <span>GOD</span></h2>
+      <P style="color: var(--muted);font-size: 0.85rem;margin-bottom:24px">Preencha os campos abaixo para criar sua conta</P>
+
+      {% if erro %}
+        <div class="erro">{{ erro }}</div>
+        {% endif %}
+
+        <form method="POST">
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field">
+                <label for="email">Email</label>
+                <input type="text" id="email" name="emailform" placeholder="Digite seu email">
+            </div>
+            <div class="field">
+                <label for="usuario">Usuário</label>
+                <input type="text" id="usuario" name="usuarioform" placeholder="Digite seu nome de usuário">
+            </div>
+            <div class="field">
+                <label for="senha">Senha</label>
+                <input type="password" id="senha" name="senhaform" placeholder="Digite sua senha">
+            </div>
+            <div class="field">
+                <label for="confirmarsenha">Confirmar Senha</label>
+                <input type="password" id="confirmarsenha" name="confirmarsenhaform" placeholder="Confirme sua senha">
+            </div>
+            <button class="btn btn-primary" type="submit">cadastrar</button>
+        </form>
+        <div class="footer-link">
+        Já tem conta? <a href="/login">Entrar</a>
+        </div>
+    </div>
+   </div>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Enviar Comprovante</title>
+    <style>
+        :root {
+            --bg:      #04050d;   /* fundo principal — quase preto */
+            --surface: #0d1120;   /* fundo dos cards — um pouco mais claro */
+            --border:  #1e2640;   /* cor das bordas */
+            --accent:  #4f46e5;   /* roxo principal */
+            --glow:    #6366f1;   /* roxo mais claro para gradientes */
+            --roxoescuro :#000042;
+            --gold:    #f59e0b;   /* dourado — usado no premium */
+            --gold2:   #fbbf24;   /* dourado mais claro */
+            --text:    #f1f5f9;   /* texto principal — branco suave */
+            --muted:   #64748b;   /* texto secundário — cinza */
+        }
+        body { font-family: Arial; background: linear-gradient(var(--bg), var(--muted)); min-height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+        .card { background: linear-gradient(var(--roxoescuro)); border-radius: 16px; padding: 40px; width: 100%; max-width: 480px; text-align: center; box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+               border: 1px solid var(--border); }
+        h2 { color:var(--text); margin-bottom: 8px; }
+        p { color: var(--muted); margin-bottom: 20px; }
+        .upload-area {
+            border: 2px dashed var(--gold);
+            border-radius: 12px;
+            padding: 40px 20px;
+            cursor: pointer;
+            transition: 0.2s;
+            background: #faf5ff;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .upload-area:hover { border-color: #7c10ca; background: #f3e8ff; }
+        .upload-area input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+        .upload-icon { font-size: 2.5rem; margin-bottom: 10px; }
+        .upload-text { color: #7c3aed; font-weight: bold; }
+        .upload-sub  { color: #999; font-size: 0.85rem; margin-top: 6px; }
+        .preview { margin-bottom: 16px; display: none; }
+        .preview img { max-width: 100%; border-radius: 10px; max-height: 200px; object-fit: cover; }
+        .preview-nome { font-size: 0.85rem; color: #555; margin-top: 8px; }
+        button[type="submit"] {
+            width: 100%;
+            padding: 13px;
+            background: linear-gradient(135deg, #2c10ca, #7406a8);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        button[type="submit"]:hover { opacity: 0.9; transform: translateY(-1px); }
+        .erro    { background: #fff5f5; border: 1px solid #ef4444; color: #dc2626; padding: 12px; border-radius: 8px; margin-bottom: 16px; }
+        .sucesso { background: #f0fdf4; border: 1px solid #22c55e; color: #16a34a; padding: 20px; border-radius: 10px; }
+        .sucesso h3 { margin-bottom: 8px; }
+        a.btn-voltar { display: inline-block; margin-top: 16px; padding: 10px 24px; background: #2c10ca; color: white; border-radius: 8px; text-decoration: none; font-weight: bold; }
+        .info-pix { background: #f5f3ff; border-radius: 10px; padding: 16px; margin-bottom: 20px; text-align: left; }
+        .info-pix strong { color: #2c10ca; }
+        .chave-pix { font-size: 1.1rem; font-weight: bold; color: #7406a8; letter-spacing: 0.5px; }
+    </style>
+    <link rel="stylesheet" href="/static/css/responsive.css">
+</head>
+<body>
+<div class="card">
+
+    {% if sucesso %}
+        <div class="sucesso">
+            <h3>✅ Comprovante enviado!</h3>
+            <p>Recebemos seu comprovante. Você será ativado como Premium em até 24h.</p>
+        </div>
+        <a class="btn-voltar" href="/dashboard">Voltar ao dashboard</a>
+
+    {% else %}
+
+        <h2>Enviar Comprovante</h2>
+
+        <div class="info-pix">
+            <p style="margin:0 0 8px;">Faça um PIX de <strong>R$ 5,90</strong> para:</p>
+            <p class="chave-pix">📱 kaue54381@gmail.com</p>
+            <p style="margin:8px 0 0;font-size:0.85rem;color:#666;">Após o pagamento, envie o comprovante abaixo.</p>
+        </div>
+
+        {% if erro %}
+            <div class="erro">{{ erro }}</div>
+        {% endif %}
+
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="upload-area" id="uploadArea">
+                <input type="file" name="comprovante" id="arquivoInput" accept=".png,.jpg,.jpeg,.pdf" required onchange="mostrarPreview(this)">
+                <div class="upload-icon">📎</div>
+                <div class="upload-text">Clique para selecionar o comprovante</div>
+                <div class="upload-sub">PNG, JPG ou PDF · máximo 5MB</div>
+            </div>
+
+            <div class="preview" id="previewArea">
+                <img id="previewImg" src="" alt="preview">
+                <div class="preview-nome" id="previewNome"></div>
+            </div>
+
+            <button type="submit">Enviar comprovante</button>
+        </form>
+
+        <a href="/premium" style="display:block;margin-top:16px;color:#7406a8;font-size:0.85rem;">← Voltar</a>
+
+    {% endif %}
+
+</div>
+
+<script>
+function mostrarPreview(input) {
+    const preview = document.getElementById('previewArea');
+    const img     = document.getElementById('previewImg');
+    const nome    = document.getElementById('previewNome');
+
+    if (input.files && input.files[0]) {
+        const arquivo = input.files[0];
+        nome.textContent = arquivo.name;
+        preview.style.display = 'block';
+
+        if (arquivo.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = e => { img.src = e.target.result; img.style.display = 'block'; };
+            reader.readAsDataURL(arquivo);
+        } else {
+            // PDF — só mostra o nome
+            img.style.display = 'none';
+        }
+    }
+}
+</script>
+</body>
+</html>

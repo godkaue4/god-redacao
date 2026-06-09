@@ -1,0 +1,178 @@
+{% extends 'admin/base.html' %}
+
+{% block titulo %}Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; display: flex; flex-direction: column; gap: 10px; transition: transform 0.2s, border-color 0.2s; position: relative; overflow: hidden; }
+    .stat-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 14px 14px 0 0; }
+    .stat-card.purple::before { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+    .stat-card.green::before  { background: var(--green); }
+    .stat-card.yellow::before { background: var(--yellow); }
+    .stat-card.red::before    { background: var(--red); }
+    .stat-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+    .stat-icon { width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+    .stat-icon.purple { background: rgba(108,99,255,0.15); color: var(--accent2); }
+    .stat-icon.green  { background: rgba(34,211,165,0.12);  color: var(--green); }
+    .stat-icon.yellow { background: rgba(251,191,36,0.12);   color: var(--yellow); }
+    .stat-icon.red    { background: rgba(248,113,113,0.12);  color: var(--red); }
+    .stat-number { font-family: var(--font-head); font-size: 2rem; font-weight: 800; line-height: 1; color: var(--text); }
+    .stat-label  { font-size: 0.8rem; color: var(--muted); font-weight: 500; }
+    .stat-sub    { font-size: 0.75rem; color: var(--muted); }
+    .section-gap { margin-top: 20px; }
+    .chart-wrap  { position: relative; height: 220px; }
+    .user-avatar { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: white; margin-right: 8px; flex-shrink: 0; }
+    .user-row { display: flex; align-items: center; }
+    .progress-bar-wrap { background: var(--surface2); border-radius: 6px; height: 6px; margin-top: 6px; overflow: hidden; }
+    .progress-bar-fill { height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--accent), var(--accent2)); transition: width 1s ease; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="grid-4">
+    <div class="stat-card purple">
+        <div class="stat-icon purple"><i class="fas fa-users"></i></div>
+        <div class="stat-number">{{ total_usuarios }}</div>
+        <div class="stat-label">Total de Usuários</div>
+        <div class="stat-sub">{{ usuarios_premium }} premium · {{ total_usuarios - usuarios_premium }} free</div>
+        <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" style="width: {{ (((usuarios_premium / total_usuarios) * 100) | int) if total_usuarios > 0 else 0 }}%"></div>
+        </div>
+    </div>
+    <div class="stat-card green">
+        <div class="stat-icon green"><i class="fas fa-crown"></i></div>
+        <div class="stat-number">{{ usuarios_premium }}</div>
+        <div class="stat-label">Usuários Premium</div>
+        <div class="stat-sub">{{ ((usuarios_premium / total_usuarios) * 100) | round(1) if total_usuarios > 0 else 0 }}% de conversão</div>
+    </div>
+    <div class="stat-card yellow">
+        <div class="stat-icon yellow"><i class="fas fa-file-alt"></i></div>
+        <div class="stat-number">{{ total_redacoes }}</div>
+        <div class="stat-label">Redações Corrigidas</div>
+        <div class="stat-sub">{{ redacoes_semana }} nos últimos 7 dias</div>
+    </div>
+    <div class="stat-card red">
+        <div class="stat-icon red"><i class="fas fa-star"></i></div>
+        <div class="stat-number">{{ "%.0f"|format(media_notas) }}</div>
+        <div class="stat-label">Média das Notas</div>
+        <div class="stat-sub">de 0 a 1000 pontos</div>
+    </div>
+</div>
+
+<div class="grid-3-2 section-gap">
+    <div class="card">
+        <div class="card-title"><i class="fas fa-chart-line" style="margin-right:7px;color:var(--accent)"></i>Redações por dia (últimos 7 dias)</div>
+        <div class="chart-wrap">
+            <canvas id="chartRedacoes"></canvas>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-title"><i class="fas fa-user-plus" style="margin-right:7px;color:var(--green)"></i>Últimos Cadastros</div>
+        <table class="tbl">
+            <thead>
+                <tr><th>Usuário</th><th>Plano</th><th>Correções</th></tr>
+            </thead>
+            <tbody>
+                {% for u in ultimos_usuarios %}
+                <tr>
+                    <td>
+                        <div class="user-row">
+                            <div class="user-avatar">{{ u.username[0].upper() }}</div>
+                            <div>
+                                <div style="font-weight:500;font-size:0.83rem;">{{ u.username }}</div>
+                                <div style="font-size:0.72rem;color:var(--muted);">{{ u.email }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if u.premium %}
+                            <span class="badge badge-purple">Premium</span>
+                        {% else %}
+                            <span class="badge badge-gray">Free</span>
+                        {% endif %}
+                    </td>
+                    <td style="color:var(--muted);font-size:0.82rem;">{{ u.correcoes }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="section-gap">
+    <div class="card">
+        <div class="card-title"><i class="fas fa-credit-card" style="margin-right:7px;color:var(--yellow)"></i>Últimos Pagamentos</div>
+        {% if pagamentos %}
+        <table class="tbl">
+            <thead>
+                <tr><th>#</th><th>Usuário</th><th>Valor</th><th>Método</th><th>Status</th><th>Data</th><th>Observação</th></tr>
+            </thead>
+            <tbody>
+                {% for p in pagamentos %}
+                <tr>
+                    <td style="color:var(--muted);font-size:0.78rem;">#{{ p.id }}</td>
+                    <td>
+                        <div style="font-weight:500;">{{ p.usuario_nome or '—' }}</div>
+                        <div style="font-size:0.72rem;color:var(--muted);">ID {{ p.usuario_id }}</div>
+                    </td>
+                    <td style="font-weight:600;color:var(--green);">R$ {{ "%.2f"|format(p.valor) }}</td>
+                    <td style="text-transform:uppercase;font-size:0.78rem;color:var(--muted);">{{ p.metodo }}</td>
+                    <td>
+                        {% if p.status == 'aprovado' %}
+                            <span class="badge badge-green">Aprovado</span>
+                        {% elif p.status == 'pendente' %}
+                            <span class="badge badge-yellow">Pendente</span>
+                        {% elif p.status == 'recusado' %}
+                            <span class="badge badge-red">Recusado</span>
+                        {% else %}
+                            <span class="badge badge-gray">{{ p.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td style="color:var(--muted);font-size:0.8rem;">{{ p.criado_em.strftime('%d/%m/%Y %H:%M') }}</td>
+                    <td style="color:var(--muted);font-size:0.8rem;">{{ p.observacao or '—' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="text-align:center;padding:30px;color:var(--muted);">
+            <i class="fas fa-inbox" style="font-size:2rem;margin-bottom:10px;display:block;opacity:0.3;"></i>
+            Nenhum pagamento registrado ainda.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+const ctx = document.getElementById('chartRedacoes').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: {{ labels_dias | tojson }},
+        datasets: [{
+            label: 'Redações',
+            data: {{ dados_dias | tojson }},
+            backgroundColor: 'rgba(108,99,255,0.25)',
+            borderColor: '#6c63ff',
+            borderWidth: 2,
+            borderRadius: 6,
+            hoverBackgroundColor: 'rgba(167,139,250,0.35)',
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: { backgroundColor: '#0e1220', borderColor: '#1e2640', borderWidth: 1, titleColor: '#e2e8f0', bodyColor: '#64748b' }
+        },
+        scales: {
+            x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e2640' } },
+            y: { ticks: { color: '#64748b', font: { size: 11 }, stepSize: 1 }, grid: { color: '#1e2640' }, beginAtZero: true }
+        }
+    }
+});
+</script>
+
+{% endblock %}

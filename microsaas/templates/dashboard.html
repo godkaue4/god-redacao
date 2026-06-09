@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Dashboard — GodRedação</title>
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg:      #04050d;
+            --bg2:     #080c1a;
+            --surface: #0d1120;
+            --surface2:#121828;
+            --border:  #1e2640;
+            --accent:  #4f46e5;
+            --glow:    #6366f1;
+            --gold:    #f59e0b;
+            --green:   #22d3a5;
+            --red:     #f87171;
+            --text:    #f1f5f9;
+            --muted:   #64748b;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+        }
+
+        /* ── NAV ── */
+        nav {
+            position: sticky; top: 0; z-index: 100;
+            height: 60px;
+            background: rgba(4,5,13,0.9);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center;
+            justify-content: space-between;
+            padding: 0 5%;
+        }
+
+        .nav-logo {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem; letter-spacing: 2px;
+            color: var(--text); text-decoration: none;
+        }
+        .nav-logo span { color: var(--gold); }
+
+        .nav-links { display: flex; gap: 6px; align-items: center; list-style: none; }
+        .nav-links a {
+            color: var(--muted); text-decoration: none;
+            font-size: 0.85rem; font-weight: 500;
+            padding: 7px 14px; border-radius: 8px; transition: all 0.2s;
+        }
+        .nav-links a:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+        .nav-links .active { color: var(--text); background: rgba(79,70,229,0.15); }
+        .nav-links .cta {
+            background: linear-gradient(135deg, var(--accent), var(--glow));
+            color: white !important; font-weight: 700;
+        }
+
+        /* ── LAYOUT ── */
+        .page { max-width: 1100px; margin: 0 auto; padding: 36px 5% 80px; }
+
+        /* ── HEADER ── */
+        .dash-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-end; margin-bottom: 32px; flex-wrap: wrap; gap: 16px;
+        }
+
+        .dash-header h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.5rem; letter-spacing: 2px; line-height: 1;
+        }
+
+        .dash-header h1 span { color: var(--gold); }
+
+        .dash-header p { color: var(--muted); font-size: 0.9rem; margin-top: 4px; }
+
+        .btn {
+            padding: 10px 22px; border-radius: 10px;
+            font-size: 0.88rem; font-weight: 700;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer; border: none;
+            text-decoration: none; display: inline-flex;
+            align-items: center; gap: 7px; transition: all 0.2s;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-accent { background: linear-gradient(135deg, var(--accent), var(--glow)); color: white; box-shadow: 0 0 20px rgba(99,102,241,0.3); }
+        .btn-gold   { background: linear-gradient(135deg, var(--gold), #fbbf24); color: #000; font-weight: 800; }
+        .btn-ghost  { background: transparent; border: 1px solid var(--border); color: var(--muted); }
+        .btn-ghost:hover { border-color: var(--accent); color: var(--text); }
+        .btn-red    { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+        .btn-sm     { padding: 6px 14px; font-size: 0.78rem; }
+
+        /* ── STAT CARDS ── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px; margin-bottom: 28px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px; padding: 20px;
+            position: relative; overflow: hidden;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .stat-card:hover { transform: translateY(-3px); border-color: var(--accent); }
+        .stat-card::before {
+            content: ''; position: absolute;
+            top: 0; left: 0; right: 0; height: 3px;
+            border-radius: 14px 14px 0 0;
+        }
+        .stat-card.blue::before   { background: linear-gradient(90deg, var(--accent), var(--glow)); }
+        .stat-card.green::before  { background: var(--green); }
+        .stat-card.gold::before   { background: var(--gold); }
+        .stat-card.purple::before { background: #a78bfa; }
+
+        .stat-icon {
+            width: 36px; height: 36px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem; margin-bottom: 12px;
+        }
+        .stat-icon.blue   { background: rgba(79,70,229,0.15);  color: #a5b4fc; }
+        .stat-icon.green  { background: rgba(34,211,165,0.12); color: var(--green); }
+        .stat-icon.gold   { background: rgba(245,158,11,0.12); color: var(--gold); }
+        .stat-icon.purple { background: rgba(167,139,250,0.12);color: #a78bfa; }
+
+        .stat-number {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2.2rem; letter-spacing: 1px; line-height: 1;
+        }
+        .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 4px; }
+
+        /* ── ALERTA FREE ── */
+        .alert-free {
+            background: rgba(245,158,11,0.1);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 12px; padding: 16px 20px;
+            display: flex; align-items: center; justify-content: space-between;
+            flex-wrap: wrap; gap: 12px; margin-bottom: 28px;
+        }
+        .alert-free p { color: var(--gold); font-size: 0.9rem; font-weight: 500; }
+
+        /* ── GRID PRINCIPAL ── */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px; margin-bottom: 28px;
+        }
+
+        /* ── CARD GENÉRICO ── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px; padding: 22px;
+        }
+
+        .card-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1rem; letter-spacing: 1px;
+            color: var(--muted); margin-bottom: 18px;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .card-title i { color: var(--accent); }
+
+        /* ── GRÁFICO ── */
+        .chart-wrap { position: relative; height: 200px; }
+
+        /* ── PERFIL ── */
+        .profile-avatar {
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--glow));
+            display: flex; align-items: center; justify-content: center;
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.6rem; color: white; margin: 0 auto 14px;
+        }
+
+        .profile-name {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.4rem; letter-spacing: 1px; text-align: center;
+        }
+
+        .profile-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 12px; border-radius: 20px;
+            font-size: 0.75rem; font-weight: 700;
+            margin: 8px auto 0; display: flex;
+            justify-content: center; width: fit-content;
+            margin: 6px auto;
+        }
+
+        .badge-premium { background: rgba(245,158,11,0.15); color: var(--gold); border: 1px solid rgba(245,158,11,0.3); }
+        .badge-free    { background: rgba(100,116,139,0.15); color: var(--muted); border: 1px solid rgba(100,116,139,0.2); }
+
+        .profile-stats {
+            display: grid; grid-template-columns: 1fr 1fr;
+            gap: 10px; margin: 16px 0;
+        }
+
+        .profile-stat {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: 10px; padding: 12px;
+            text-align: center;
+        }
+
+        .profile-stat strong {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem; display: block; color: var(--text);
+        }
+        .profile-stat span { font-size: 0.72rem; color: var(--muted); }
+
+        /* ── BARRA DE PROGRESSO ── */
+        .progress-wrap { margin-bottom: 12px; }
+        .progress-label {
+            display: flex; justify-content: space-between;
+            font-size: 0.78rem; color: var(--muted); margin-bottom: 6px;
+        }
+        .progress-bar {
+            background: var(--surface2); border-radius: 6px;
+            height: 6px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; border-radius: 6px;
+            background: linear-gradient(90deg, var(--accent), var(--glow));
+            transition: width 1s ease;
+        }
+        .progress-fill.gold { background: linear-gradient(90deg, var(--gold), #fbbf24); }
+        .progress-fill.green { background: var(--green); }
+
+        /* ── LISTA DE REDAÇÕES ── */
+        .redacoes-lista { display: flex; flex-direction: column; gap: 16px; }
+
+        .redacao-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 14px; padding: 20px;
+            transition: border-color 0.2s, transform 0.2s;
+        }
+        .redacao-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+
+        .redacao-header {
+            display: flex; justify-content: space-between;
+            align-items: flex-start; margin-bottom: 14px; gap: 12px;
+        }
+
+        .redacao-nota {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 2rem; line-height: 1;
+            flex-shrink: 0;
+        }
+
+        .nota-alta  { color: var(--green); }
+        .nota-media { color: var(--gold); }
+        .nota-baixa { color: var(--red); }
+
+        .redacao-tema {
+            font-weight: 600; font-size: 0.9rem;
+            margin-bottom: 4px;
+        }
+        .redacao-preview {
+            font-size: 0.8rem; color: var(--muted);
+            line-height: 1.5;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        /* competências mini */
+        .comp-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr);
+            gap: 6px; margin: 14px 0;
+        }
+        .comp-item { text-align: center; }
+        .comp-label { font-size: 0.65rem; color: var(--muted); margin-bottom: 4px; }
+        .comp-bar {
+            background: var(--surface2); border-radius: 4px;
+            height: 40px; position: relative; overflow: hidden;
+        }
+        .comp-fill {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(180deg, var(--accent), var(--glow));
+            border-radius: 4px; transition: height 0.8s ease;
+        }
+        .comp-val {
+            font-size: 0.7rem; font-weight: 700;
+            color: var(--text); margin-top: 4px;
+        }
+
+        /* detalhes colapsáveis */
+        .details-toggle {
+            background: none; border: none;
+            color: var(--muted); font-size: 0.8rem;
+            font-family: 'DM Sans', sans-serif;
+            cursor: pointer; padding: 0;
+            display: flex; align-items: center; gap: 6px;
+            transition: color 0.2s;
+        }
+        .details-toggle:hover { color: var(--accent); }
+
+        .details-body {
+            display: none; margin-top: 14px;
+            border-top: 1px solid var(--border); padding-top: 14px;
+        }
+        .details-body.open { display: block; }
+
+        .detail-section { margin-bottom: 14px; }
+        .detail-section h6 {
+            font-size: 0.72rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: var(--muted); margin-bottom: 8px;
+        }
+
+        .erro-item {
+            background: rgba(248,113,113,0.06);
+            border: 1px solid rgba(248,113,113,0.2);
+            border-radius: 8px; padding: 10px 12px;
+            margin-bottom: 8px; font-size: 0.82rem;
+        }
+        .erro-item strong { color: var(--red); }
+
+        .sugestao-item {
+            background: rgba(34,211,165,0.06);
+            border: 1px solid rgba(34,211,165,0.2);
+            border-radius: 8px; padding: 10px 12px;
+            margin-bottom: 8px; font-size: 0.82rem;
+        }
+        .sugestao-item strong { color: var(--green); }
+
+        .redacao-actions {
+            display: flex; gap: 8px; align-items: center;
+            margin-top: 14px; flex-wrap: wrap;
+        }
+
+        /* ── EMPTY STATE ── */
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+            color: var(--muted);
+        }
+        .empty-state i { font-size: 3rem; opacity: 0.2; margin-bottom: 16px; display: block; }
+        .empty-state p { margin-bottom: 20px; }
+
+        /* ── SEÇÃO TÍTULO ── */
+        .section-header {
+            display: flex; justify-content: space-between;
+            align-items: center; margin-bottom: 16px;
+        }
+        .section-title {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.3rem; letter-spacing: 1px;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .main-grid  { grid-template-columns: 1fr; }
+            .comp-grid  { grid-template-columns: repeat(5, 1fr); }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+    <link rel="stylesheet" href="/static/css/responsive.css">
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+    <a href="/" class="nav-logo">God<span>Redação</span></a>
+    <button class="menu-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
+    <ul class="nav-links" id="navLinks">
+        <li><a href="/">Início</a></li>
+        <li><a href="/corretor" class="cta"><i class="fas fa-pen"></i> Nova Redação</a></li>
+        {% if not premium %}
+        <li><a href="/premium" class="btn btn-gold btn-sm">⭐ Premium</a></li>
+        {% endif %}
+        <li><a href="/logout">Sair</a></li>
+    </ul>
+</nav>
+
+<div class="page">
+
+    <!-- HEADER -->
+    <div class="dash-header">
+        <div>
+            <h1>Olá, <span>{{ usuario }}</span> 👋</h1>
+            <p>Acompanhe sua evolução na redação do ENEM</p>
+        </div>
+        <a href="/corretor" class="btn btn-accent">
+            <i class="fas fa-pen"></i> Corrigir redação
+        </a>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stats-grid">
+        <div class="stat-card blue">
+            <div class="stat-icon blue"><i class="fas fa-file-alt"></i></div>
+            <div class="stat-number">{{ total }}</div>
+            <div class="stat-label">Redações corrigidas</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-icon green"><i class="fas fa-chart-line"></i></div>
+            <div class="stat-number">{{ media }}</div>
+            <div class="stat-label">Média geral</div>
+        </div>
+        <div class="stat-card gold">
+            <div class="stat-icon gold"><i class="fas fa-trophy"></i></div>
+            <div class="stat-number">{{ melhor }}</div>
+            <div class="stat-label">Melhor nota</div>
+        </div>
+        <div class="stat-card purple">
+            <div class="stat-icon purple">
+                {% if premium %}
+                <i class="fas fa-crown"></i>
+                {% else %}
+                <i class="fas fa-bolt"></i>
+                {% endif %}
+            </div>
+            {% if premium %}
+            <div class="stat-number" style="color:#a78bfa;">∞</div>
+            <div class="stat-label">Correções ilimitadas</div>
+            {% else %}
+            <div class="stat-number">{{ restantes }}</div>
+            <div class="stat-label">Correções restantes</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ALERTA FREE -->
+    {% if restantes == 0 and not premium %}
+    <div class="alert-free">
+        <p><i class="fas fa-lock"></i> Você usou todas as suas correções gratuitas.</p>
+        <a href="/premium" class="btn btn-gold btn-sm">⭐ Assinar Premium — R$ 5,90/mês</a>
+    </div>
+    {% endif %}
+
+    <!-- GRID GRÁFICO + PERFIL -->
+    <div class="main-grid">
+
+        <!-- GRÁFICO -->
+        <div class="card">
+            <div class="card-title">
+                <i class="fas fa-chart-line"></i> EVOLUÇÃO DAS NOTAS
+            </div>
+            {% if total > 0 %}
+            <div class="chart-wrap">
+                <canvas id="grafico"></canvas>
+            </div>
+            {% else %}
+            <div style="text-align:center;padding:40px;color:var(--muted);">
+                <i class="fas fa-chart-line" style="font-size:2rem;opacity:0.2;display:block;margin-bottom:10px;"></i>
+                Corrija sua primeira redação para ver a evolução.
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- PERFIL -->
+        <div class="card" style="text-align:center;">
+            <div class="card-title" style="justify-content:center;">
+                <i class="fas fa-user"></i> MEU PERFIL
+            </div>
+            <div class="profile-avatar">{{ usuario[0].upper() }}</div>
+            <div class="profile-name">{{ usuario }}</div>
+
+            <div class="profile-badge {{ 'badge-premium' if premium else 'badge-free' }}">
+                {% if premium %}
+                <i class="fas fa-crown"></i> Premium
+                {% else %}
+                <i class="fas fa-user"></i> Plano Free
+                {% endif %}
+            </div>
+
+            <div class="profile-stats">
+                <div class="profile-stat">
+                    <strong>{{ total }}</strong>
+                    <span>Redações</span>
+                </div>
+                <div class="profile-stat">
+                    <strong>{{ melhor }}</strong>
+                    <span>Melhor nota</span>
+                </div>
+                <div class="profile-stat">
+                    <strong>{{ media }}</strong>
+                    <span>Média</span>
+                </div>
+                <div class="profile-stat">
+                    <strong>{{ restantes if not premium else '∞' }}</strong>
+                    <span>Restantes</span>
+                </div>
+            </div>
+
+            <!-- barra de progresso da nota -->
+            {% if total > 0 %}
+            <div class="progress-wrap">
+                <div class="progress-label">
+                    <span>Média geral</span>
+                    <span>{{ media }}/1000</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill {{ 'green' if media >= 700 else ('gold' if media >= 400 else '') }}"
+                         style="width: {{ (media / 1000 * 100) | int }}%"></div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if not premium %}
+            <a href="/premium" class="btn btn-gold" style="width:100%;justify-content:center;margin-top:8px;">
+                <i class="fas fa-crown"></i> Assinar Premium
+            </a>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <!-- LISTA DE REDAÇÕES -->
+    <div class="section-header">
+        <div class="section-title">MINHAS REDAÇÕES</div>
+        <a href="/corretor" class="btn btn-ghost btn-sm">
+            <i class="fas fa-plus"></i> Nova
+        </a>
+    </div>
+
+    {% if redacoes %}
+    <div class="redacoes-lista">
+        {% for r in redacoes %}
+        <div class="redacao-card">
+            <div class="redacao-header">
+                <div>
+                    <div class="redacao-tema">{{ r.tema or 'Sem tema definido' }}</div>
+                    <div class="redacao-preview">{{ r.texto[:120] }}...</div>
+                </div>
+                <div class="redacao-nota {{ 'nota-alta' if r.nota >= 700 else ('nota-media' if r.nota >= 400 else 'nota-baixa') }}">
+                    {{ r.nota }}
+                </div>
+            </div>
+
+            <!-- MINI BARRAS DE COMPETÊNCIA -->
+            {% if r.competencias %}
+            <div class="comp-grid">
+                {% for c in r.competencias %}
+                <div class="comp-item">
+                    <div class="comp-label">C{{ loop.index }}</div>
+                    <div class="comp-bar">
+                        <div class="comp-fill" style="height:{{ (c.nota / 200 * 100) | int }}%"></div>
+                    </div>
+                    <div class="comp-val">{{ c.nota }}</div>
+                </div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- BOTÃO VER DETALHES -->
+            <button class="details-toggle" onclick="toggleDetalhes(this)">
+                <i class="fas fa-chevron-down"></i> Ver detalhes completos
+            </button>
+
+            <!-- DETALHES COLAPSÁVEIS -->
+            <div class="details-body">
+
+                <!-- COMPETÊNCIAS DETALHADAS -->
+                {% if r.competencias %}
+                <div class="detail-section">
+                    <h6><i class="fas fa-star"></i> Competências</h6>
+                    {% for c in r.competencias %}
+                    <div style="margin-bottom:10px;">
+                        <div class="progress-label">
+                            <span style="font-size:0.8rem;color:var(--text);">{{ c.nome }}</span>
+                            <span>{{ c.nota }}/200</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width:{{ (c.nota / 200 * 100) | int }}%"></div>
+                        </div>
+                        <p style="font-size:0.78rem;color:var(--muted);margin-top:4px;">{{ c.analise }}</p>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- ERROS -->
+                {% if r.erros %}
+                <div class="detail-section">
+                    <h6><i class="fas fa-exclamation-circle"></i> Erros encontrados</h6>
+                    {% for e in r.erros %}
+                    <div class="erro-item">
+                        <strong>Trecho:</strong> {{ e.trecho }}<br>
+                        <strong>Erro:</strong> {{ e.explicacao }}<br>
+                        <strong>Correção:</strong> {{ e.correcao }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- SUGESTÕES -->
+                {% if r.sugestoes %}
+                <div class="detail-section">
+                    <h6><i class="fas fa-lightbulb"></i> Sugestões de melhoria</h6>
+                    {% for s in r.sugestoes %}
+                    <div class="sugestao-item">
+                        <strong>{{ s.titulo }}</strong><br>
+                        {{ s.descricao }}<br>
+                        <em style="color:var(--muted);">Exemplo: {{ s.exemplo }}</em>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- TEXTO COMPLETO -->
+                <div class="detail-section">
+                    <h6><i class="fas fa-file-alt"></i> Texto enviado</h6>
+                    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;font-size:0.82rem;color:var(--muted);line-height:1.7;max-height:200px;overflow-y:auto;">
+                        {{ r.texto }}
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- AÇÕES -->
+            <div class="redacao-actions">
+                
+                <form action="/deletar_redacao/{{ r.id }}" method="POST"
+                      onsubmit="return confirm('Apagar esta redação?')">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-red btn-sm">
+                        <i class="fas fa-trash"></i> Apagar
+                    </button>
+                </form>
+                <span style="font-size:0.75rem;color:var(--muted);margin-left:auto;">
+                    Nota: <strong style="color:var(--text);">{{ r.nota }}</strong>/1000
+                </span>
+            </div>
+
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fas fa-file-alt"></i>
+            <p>Você ainda não corrigiu nenhuma redação.</p>
+            <a href="/corretor" class="btn btn-accent">
+                <i class="fas fa-pen"></i> Corrigir minha primeira redação
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+// ── GRÁFICO ──
+const dados = JSON.parse('{{ redacoes_json | tojson | safe }}');
+if (dados.length > 0) {
+    const ctx = document.getElementById('grafico').getContext('2d');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dados.map((_, i) => 'Redação ' + (i + 1)),
+            datasets: [{
+                label: 'Nota',
+                data: dados.map(r => r.nota),
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99,102,241,0.1)',
+                tension: 0.4,
+                fill: true,
+                pointBackgroundColor: '#6366f1',
+                pointRadius: 5,
+                pointHoverRadius: 7,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0d1120',
+                    borderColor: '#1e2640',
+                    borderWidth: 1,
+                    titleColor: '#f1f5f9',
+                    bodyColor: '#64748b',
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e2640' } },
+                y: {
+                    ticks: { color: '#64748b', font: { size: 11 } },
+                    grid: { color: '#1e2640' },
+                    min: 0, max: 1000,
+                }
+            }
+        }
+    });
+}
+
+// ── TOGGLE DETALHES ──
+function toggleDetalhes(btn) {
+    const card   = btn.closest('.redacao-card');
+    const body   = card.querySelector('.details-body');
+    const icon   = btn.querySelector('i');
+    const isOpen = body.classList.toggle('open');
+    icon.style.transform = isOpen ? 'rotate(180deg)' : '';
+    btn.querySelector('i').style.transition = 'transform 0.3s';
+    btn.innerHTML = isOpen
+        ? '<i class="fas fa-chevron-up" style="transition:transform 0.3s;"></i> Ocultar detalhes'
+        : '<i class="fas fa-chevron-down" style="transition:transform 0.3s;"></i> Ver detalhes completos';
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,106 @@
+{% extends "admin/base.html" %}
+
+{% block titulo %}Aprovar Pagamentos{% endblock %}
+
+{% block extra_head %}
+<style>
+    .pagamento-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
+    .pagamento-info { display: flex; flex-direction: column; gap: 6px; }
+    .pagamento-usuario { font-size: 1.1rem; font-weight: 600; color: var(--text); }
+    .pagamento-valor { font-size: 0.95rem; color: var(--muted); }
+    .aprovar-btn { background: var(--accent); color: white; padding: 8px 16px; border-radius: 6px; font-size: 0.9rem; font-weight: 700; border: none; cursor: pointer; transition: background 0.2s; }
+    .aprovar-btn:hover { background: var(--accent2); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div>
+        <h2 style="font-family:var(--font-head);font-size:1.3rem;font-weight:800;">Pagamentos</h2>
+        <p style="color:var(--muted);font-size:0.83rem;margin-top:3px;">
+            {{ total }} total · {{ aprovados }} aprovados · {{ pendentes }} pendentes
+        </p>
+    </div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+    <table class="tbl">
+        <thead>
+            <tr>
+                <th style="padding-left:22px;">#</th>
+                <th>Usuário</th>
+                <th>Valor</th>
+                <th>Método</th>
+                <th>Status</th>
+                <th>Data</th>
+                <th>Observação</th>
+                <th style="padding-right:22px;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for p in pagamentos %}
+            <tr>
+                <td style="padding-left:22px;color:var(--muted);font-size:0.78rem;">#{{ p.id }}</td>
+                <td>
+                    <div style="font-weight:500;">{{ p.usuario_nome or '—' }}</div>
+                    <div style="font-size:0.72rem;color:var(--muted);">ID {{ p.usuario_id }}</div>
+                </td>
+                <td style="font-weight:600;color:var(--green);">R$ {{ "%.2f"|format(p.valor) }}</td>
+                <td style="text-transform:uppercase;font-size:0.78rem;color:var(--muted);">{{ p.metodo }}</td>
+                <td>
+                    {% if p.status == 'aprovado' %}
+                        <span class="badge badge-green">Aprovado</span>
+                    {% elif p.status == 'pendente' %}
+                        <span class="badge badge-yellow">Pendente</span>
+                    {% elif p.status == 'recusado' %}
+                        <span class="badge badge-red">Recusado</span>
+                    {% else %}
+                        <span class="badge badge-gray">{{ p.status }}</span>
+                    {% endif %}
+                </td>
+                <td style="color:var(--muted);font-size:0.8rem;">
+                    {{ p.criado_em.strftime('%d/%m/%Y %H:%M') }}
+                </td>
+                <td>
+                    {% if p.comprovante %}
+                        <a href="/admin/ver_comprovante/{{ p.comprovante }}" target="_blank" 
+                        style="color:var(--accent2);font-size:0.8rem;">
+                        <i class="fas fa-file"></i> Ver arquivo
+                        </a>
+                    {% else %}
+                        <span style="color:var(--muted);">—</span>
+                    {% endif %}
+                </td>
+                <td style="padding-right:22px;">
+                    {% if p.status == 'pendente' %}
+                    <div style="display:flex;gap:6px;">
+                        <form method="POST" action="/admin/aprovar_pagamento/{{ p.id }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-green">
+                                <i class="fas fa-check"></i> Aprovar
+                            </button>
+                        </form>
+                        <form method="POST" action="/admin/rejeitar_pagamento/{{ p.id }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-red">
+                                <i class="fas fa-times"></i> Recusar
+                            </button>
+                        </form>
+                    </div>
+                    {% else %}
+                        <span style="color:var(--muted);font-size:0.8rem;">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8" style="text-align:center;padding:40px;color:var(--muted);">
+                    <i class="fas fa-inbox" style="font-size:2rem;opacity:0.2;display:block;margin-bottom:10px;"></i>
+                    Nenhum pagamento registrado.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

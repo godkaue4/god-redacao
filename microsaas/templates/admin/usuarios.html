@@ -1,0 +1,215 @@
+{% extends 'admin/base.html' %}
+
+{% block titulo %}Usuários{% endblock %}
+
+{% block extra_head %}
+<style>
+    .search-input { flex: 1; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; color: var(--text); font-family: var(--font-body); font-size: 0.87rem; outline: none; transition: border-color 0.2s; }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted); }
+    .btn { padding: 9px 18px; border-radius: 10px; font-size: 0.84rem; font-weight: 600; font-family: var(--font-body); cursor: pointer; border: none; transition: opacity 0.2s, transform 0.1s; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
+    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; }
+    .btn-green   { background: rgba(34,211,165,0.15);  color: var(--green); border: 1px solid rgba(34,211,165,0.3); }
+    .btn-red     { background: rgba(248,113,113,0.15); color: var(--red);   border: 1px solid rgba(248,113,113,0.3); }
+    .btn-sm      { padding: 5px 12px; font-size: 0.78rem; }
+    .filter-row  { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .filter-btn  { padding: 5px 14px; border-radius: 20px; font-size: 0.78rem; font-weight: 600; cursor: pointer; border: 1px solid var(--border); background: transparent; color: var(--muted); font-family: var(--font-body); transition: all 0.2s; }
+    .filter-btn:hover, .filter-btn.active { border-color: var(--accent); color: var(--accent2); background: rgba(108,99,255,0.1); }
+    .user-avatar { width: 34px; height: 34px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: inline-flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: white; margin-right: 10px; flex-shrink: 0; }
+    .user-info { display: flex; align-items: center; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 999; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 420px; max-width: 95vw; }
+    .modal h3 { font-family: var(--font-head); font-size: 1rem; font-weight: 700; margin-bottom: 18px; color: var(--text); }
+    .modal-field { margin-bottom: 14px; }
+    .modal-field label { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 6px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+    .modal-field input, .modal-field select { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 13px; color: var(--text); font-family: var(--font-body); font-size: 0.85rem; outline: none; }
+    .modal-field input:focus, .modal-field select:focus { border-color: var(--accent); }
+    .modal-field select option { background: var(--surface2); }
+    .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+    .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); }
+    .empty-state i { font-size: 2.5rem; opacity: 0.2; margin-bottom: 12px; display: block; }
+    .page-info { color: var(--muted); font-size: 0.82rem; }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+    <div>
+        <h2 style="font-family:var(--font-head);font-size:1.3rem;font-weight:800;color:var(--text);">Usuários</h2>
+        <p style="color:var(--muted);font-size:0.83rem;margin-top:3px;">{{ total_usuarios }} usuários cadastrados · {{ usuarios_premium }} premium</p>
+    </div>
+</div>
+
+<div style="display:flex;gap:10px;margin-bottom:20px;">
+    <input type="text" class="search-input" id="searchInput" placeholder="Buscar por usuário ou email..." oninput="filtrarTabela()">
+</div>
+
+<div class="filter-row">
+    <button class="filter-btn active" onclick="setFiltro('todos', this)">Todos</button>
+    <button class="filter-btn" onclick="setFiltro('premium', this)">Premium</button>
+    <button class="filter-btn" onclick="setFiltro('free', this)">Free</button>
+    <button class="filter-btn" onclick="setFiltro('admin', this)">Admin</button>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+    <table class="tbl" id="tabelaUsuarios">
+        <thead>
+            <tr>
+                <th style="padding-left:22px;">#</th>
+                <th>Usuário</th>
+                <th>Email</th>
+                <th>Plano</th>
+                <th>Correções</th>
+                <th>Cadastro</th>
+                <th>Admin</th>
+                <th style="padding-right:22px;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr data-plano="{{ 'premium' if u.premium else 'free' }}" data-admin="{{ 'admin' if u.is_admin else '' }}">
+                <td style="padding-left:22px;color:var(--muted);font-size:0.78rem;">#{{ u.id }}</td>
+                <td>
+                    <div class="user-info">
+                        <div class="user-avatar">{{ u.username[0].upper() }}</div>
+                        <div>
+                            <div style="font-weight:500;font-size:0.85rem;">{{ u.username }}</div>
+                            <div style="font-size:0.72rem;color:var(--muted);">{{ u.correcoes }} correções feitas</div>
+                        </div>
+                    </div>
+                </td>
+                <td style="color:var(--muted);font-size:0.83rem;">{{ u.email }}</td>
+                <td>
+                    {% if u.premium %}
+                        <span class="badge badge-purple">Premium</span>
+                    {% else %}
+                        <span class="badge badge-gray">Free</span>
+                    {% endif %}
+                </td>
+                <td style="font-weight:600;">{{ u.correcoes }}</td>
+                <td style="color:var(--muted);font-size:0.8rem;">{{ u.criado_em.strftime('%d/%m/%Y') if u.criado_em else '—' }}</td>
+                <td>
+                    {% if u.is_admin %}
+                        <span class="badge badge-purple"><i class="fas fa-shield-alt"></i> Sim</span>
+                    {% else %}
+                        <span class="badge badge-gray">Não</span>
+                    {% endif %}
+                </td>
+                <td style="padding-right:22px;">
+                    <div style="display:flex;gap:6px;">
+                        <button class="btn btn-sm btn-green" onclick="abrirModal({{ u.id }}, '{{ u.username }}', '{{ u.email }}', {{ u.premium | lower }}, {{ u.is_admin | lower }})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <form method="POST" action="/admin/deletar_usuario/{{ u.id }}" onsubmit="return confirm('Deletar {{ u.username }}?')" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-red"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="8">
+                    <div class="empty-state">
+                        <i class="fas fa-users"></i>
+                        Nenhum usuário encontrado.
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div style="margin-top:14px;">
+    <span class="page-info" id="countInfo"></span>
+</div>
+
+<div class="modal-overlay" id="modalOverlay" onclick="fecharModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+        <h3><i class="fas fa-user-edit" style="color:var(--accent2);margin-right:8px;"></i>Editar Usuário</h3>
+        <form method="POST" action="/admin/editar_usuario">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="usuario_id" id="modal_id">
+            <div class="modal-field">
+                <label>Usuário</label>
+                <input type="text" name="username" id="modal_username" readonly style="opacity:0.6;">
+            </div>
+            <div class="modal-field">
+                <label>Email</label>
+                <input type="email" name="email" id="modal_email">
+            </div>
+            <div class="modal-field">
+                <label>Plano</label>
+                <select name="premium" id="modal_premium">
+                    <option value="false">Free</option>
+                    <option value="true">Premium</option>
+                </select>
+            </div>
+            <div class="modal-field">
+                <label>Permissão Admin</label>
+                <select name="is_admin" id="modal_admin">
+                    <option value="false">Não</option>
+                    <option value="true">Sim</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button type="button" class="btn" style="background:var(--surface2);color:var(--muted);border:1px solid var(--border);" onclick="document.getElementById('modalOverlay').classList.remove('open')">Cancelar</button>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Salvar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+let filtroAtivo = 'todos';
+
+function filtrarTabela() {
+    const busca = document.getElementById('searchInput').value.toLowerCase();
+    const linhas = document.querySelectorAll('#tabelaUsuarios tbody tr[data-plano]');
+    let visiveis = 0;
+    linhas.forEach(tr => {
+        const texto = tr.innerText.toLowerCase();
+        const passaBusca = texto.includes(busca);
+        const passaFiltro =
+            filtroAtivo === 'todos' ||
+            (filtroAtivo === 'premium' && tr.dataset.plano === 'premium') ||
+            (filtroAtivo === 'free'    && tr.dataset.plano === 'free') ||
+            (filtroAtivo === 'admin'   && tr.dataset.admin === 'admin');
+        tr.style.display = (passaBusca && passaFiltro) ? '' : 'none';
+        if (passaBusca && passaFiltro) visiveis++;
+    });
+    document.getElementById('countInfo').textContent = visiveis + ' resultado(s)';
+}
+
+function setFiltro(filtro, btn) {
+    filtroAtivo = filtro;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filtrarTabela();
+}
+
+function abrirModal(id, username, email, premium, isAdmin) {
+    document.getElementById('modal_id').value = id;
+    document.getElementById('modal_username').value = username;
+    document.getElementById('modal_email').value = email;
+    document.getElementById('modal_premium').value = String(premium);
+    document.getElementById('modal_admin').value = String(isAdmin);
+    document.getElementById('modalOverlay').classList.add('open');
+}
+
+function fecharModal(e) {
+    if (e.target === document.getElementById('modalOverlay'))
+        document.getElementById('modalOverlay').classList.remove('open');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    const total = document.querySelectorAll('#tabelaUsuarios tbody tr[data-plano]').length;
+    document.getElementById('countInfo').textContent = total + ' resultado(s)';
+});
+</script>
+
+{% endblock %}

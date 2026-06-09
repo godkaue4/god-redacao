@@ -1,0 +1,72 @@
+{% extends 'admin/base.html' %}
+{% block titulo %}Redações{% endblock %}
+
+{% block content %}
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div>
+        <h2 style="font-family:var(--font-head);font-size:1.3rem;font-weight:800;">Redações</h2>
+        <p style="color:var(--muted);font-size:0.83rem;margin-top:3px;">
+            {{ total }} total · média {{ media }} pts · melhor {{ melhor }} pts
+        </p>
+    </div>
+</div>
+
+<div class="card" style="padding:0;overflow:hidden;">
+    <table class="tbl">
+        <thead>
+            <tr>
+                <th style="padding-left:22px;">#</th>
+                <th>Tema</th>
+                <th>Nota</th>
+                <th>Usuário ID</th>
+                <th>Data</th>
+                <th style="padding-right:22px;">Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in redacoes %}
+            <tr>
+                <td style="padding-left:22px;color:var(--muted);font-size:0.78rem;">#{{ r.id }}</td>
+                <td style="max-width:300px;">
+                    <div style="font-weight:500;font-size:0.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:280px;">
+                        {{ r.tema or 'Sem tema' }}
+                    </div>
+                    <div style="font-size:0.72rem;color:var(--muted);">
+                        {{ r.texto[:60] }}...
+                    </div>
+                </td>
+                <td>
+                    {% if r.nota >= 800 %}
+                        <span class="badge badge-green">{{ r.nota }}</span>
+                    {% elif r.nota >= 500 %}
+                        <span class="badge badge-yellow">{{ r.nota }}</span>
+                    {% else %}
+                        <span class="badge badge-red">{{ r.nota }}</span>
+                    {% endif %}
+                </td>
+                <td style="color:var(--muted);">{{ r.usuario_id }}</td>
+                <td style="color:var(--muted);font-size:0.8rem;">
+                    {{ r.criada_em.strftime('%d/%m/%Y %H:%M') if r.criada_em else '—' }}
+                </td>
+                <td style="padding-right:22px;">
+                    <form method="POST" action="/deletar_redacao_admin/{{ r.id }}" onsubmit="return confirm('Deletar redação #{{ r.id }}?')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-sm btn-red">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align:center;padding:40px;color:var(--muted);">
+                    <i class="fas fa-file-alt" style="font-size:2rem;opacity:0.2;display:block;margin-bottom:10px;"></i>
+                    Nenhuma redação ainda.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
