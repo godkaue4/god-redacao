@@ -154,7 +154,8 @@ nav {
     transition: all 0.25s ease;
   }
 
-  .nav-links.aberto{
+  .nav-links.aberto,
+  .nav-links.open {
     display: flex;
     transform: translateY(0);
     pointer-events: all;
@@ -772,8 +773,8 @@ footer p { font-size: 0.78rem; color: var(--muted); }
 <nav>
   <a href="/" class="nav-logo">God<span>Redação</span></a>
 
-  <button class="menu-toggle" onclick="document.getElementById('navLinks').classList.toggle('open')">☰</button>
-  
+
+  <button class="menu-toggle" type="button" aria-label="Abrir menu" aria-controls="navLinks" aria-expanded="false">☰</button>  
   <ul class="nav-links" id="navLinks">
     <li> <a href="/">Início</a></li>
     <li> <a href="/corretor">Corretor</a></li>
@@ -864,6 +865,22 @@ footer p { font-size: 0.78rem; color: var(--muted); }
 /* ════════════════════════════════
    UTILITÁRIOS
 ════════════════════════════════ */
+const menuToggle = document.querySelector('.menu-toggle');
+const navLinks = document.getElementById('navLinks');
+
+if (menuToggle && navLinks) {
+  menuToggle.addEventListener('click', () => {
+    const isOpen = navLinks.classList.toggle('open');
+    menuToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  navLinks.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', () => {
+      navLinks.classList.remove('open');
+      menuToggle.setAttribute('aria-expanded', 'false');
+    });
+  });
+}
 function esc(str) {
   return String(str)
     .replace(/&/g, '&amp;')
