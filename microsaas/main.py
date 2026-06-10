@@ -588,13 +588,13 @@ REGRAS:
             "proposta":""
         }
 @app.route('/api/gerar_tema', methods=["GET","POST"])
+@app.route('/api/tema', methods=["GET","POST"])
 @login_required
 def gerar():
-    user= db.session.get(Usuarios, current_user.id)
-    if not user.premium:
+    user = db.session.get(Usuarios, current_user.id)
+    if not user or not user.premium:
         return jsonify({'erro': 'Apenas para usuários premium'}), 403
-    if user.premium:
-        return jsonify(gerar_tema())
+    return jsonify(gerar_tema())
 @app.route('/corretor')
 @login_required
 def corretor():

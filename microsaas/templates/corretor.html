@@ -903,12 +903,14 @@ document.getElementById('gerartema').addEventListener('click', async () => {
   document.getElementById('temabox').innerHTML = '';
 
   try {
-    const res = await fetch('/api/gerar_tema', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrf() },
-      body: JSON.stringify({ tema: document.getElementById('tema').value })
+    const res = await fetch('{{ url_for("gerar") }}', {
+      method: 'GET',
+      headers: { 'Accept': 'application/json' }
     });
     const d = await res.json();
+    if (!res.ok || d.erro) {
+      throw new Error(d.erro || 'Erro ao gerar tema');
+    }
     document.getElementById('tema').value = d.titulo;
 
     document.getElementById('temabox').innerHTML = `
