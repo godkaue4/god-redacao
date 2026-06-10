@@ -1,4 +1,4 @@
-from BD import db
+from microsaas.BD import db
 from flask_login import UserMixin
 from datetime import datetime
 

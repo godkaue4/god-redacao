@@ -12,9 +12,9 @@ from flask import Flask
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask import redirect, url_for
-from BD import db
+from microsaas.BD import db
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from models import Usuarios,Redacao,Pagamento
+from microsaas.models import Usuarios,Redacao,Pagamento
 from datetime import datetime,timedelta 
 import google.generativeai as genai
 from flask_wtf.csrf import CSRFProtect
