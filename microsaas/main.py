@@ -12,9 +12,9 @@ from flask import Flask
 from flask_admin import Admin, BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask import redirect, url_for
-from microsaas.BD import db
+from BD import db
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from microsaas.models import Usuarios,Redacao,Pagamento
+from models import Usuarios,Redacao,Pagamento
 from datetime import datetime,timedelta 
 import google.generativeai as genai
 from flask_wtf.csrf import CSRFProtect
@@ -593,8 +593,8 @@ def gerar():
     user= db.session.get(Usuarios, current_user.id)
     if not user.premium:
         return jsonify({'erro': 'Apenas para usuários premium'}), 403
-    
-    return jsonify(gerar_tema())
+    if user.premium:
+        return jsonify(gerar_tema())
 @app.route('/corretor')
 @login_required
 def corretor():
