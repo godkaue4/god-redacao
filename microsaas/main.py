@@ -587,7 +587,7 @@ REGRAS:
             "textos":[],
             "proposta":""
         }
-@app.route('/api/gerar_tema', methods=["GET"])
+@app.route('/api/gerar_tema', methods=["GET","POST"])
 @login_required
 def gerar():
     user= db.session.get(Usuarios, current_user.id)
