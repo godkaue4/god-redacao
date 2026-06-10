@@ -689,7 +689,7 @@ def cadastrar():
         novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha)
         db.session.add(novo_usuario)
         db.session.commit()
-        login_user(novo_usuario)
+        login_user(novo_usuario,remember=True)
         return redirect(url_for('dashboard'))
     return render_template('cadastro.html')
 
