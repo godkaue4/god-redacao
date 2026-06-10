@@ -667,7 +667,7 @@ def login():
             return render_template('login.html',erro=erro)
         if not user:
             return render_template('login.html',erro='Usuário não encontrado')
-        login_user(user)        
+        login_user(user,remember=True)        
         return redirect(url_for('dashboard'))
     return render_template('login.html')
 
