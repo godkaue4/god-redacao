@@ -73,6 +73,7 @@
         }
         .field input:focus { border-color: var(--accent); }
 
+
         /* 6. botão */
         .btn {
             width: 100%;
@@ -113,6 +114,15 @@
             font-size: 0.85rem;
             margin-bottom: 16px;
         }
+        .sucesso {
+            background: rgba(34,211,165,0.1);
+            border: 1px solid rgba(34,211,165,0.3);
+            color: #22d1a5;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 16px;
+        }
     </style>
 </head>
 <body>
@@ -125,7 +135,9 @@
     {% if erro %}
     <div class="erro">{{ erro }}</div>
     {% endif %}
-
+    {% if sucesso %}
+    <div class="sucesso">{{ sucesso }}</div>
+    {% endif %}
     <form method="POST">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
@@ -142,6 +154,9 @@
         <button type="submit" class="btn">Entrar</button>
     </form>
 
+    <div class="footer-link">
+        <a href="/esqueci-senha">Esqueceu a senha?</a>
+    </div>
     <div class="footer-link">
         Não tem conta? <a href="/cadastrar">Criar conta grátis</a>
     </div>

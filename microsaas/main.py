@@ -10,11 +10,15 @@ from flask_limiter import Limiter
 from flask import render_template, request,jsonify
 from flask import Flask
 from flask_admin import Admin, BaseView, expose
+import hashlib
+import secrets
+import smtplib
+from email.message import EmailMessage
 from flask_admin.contrib.sqla import ModelView
 from flask import redirect, url_for
 from microsaas.BD import db
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
-from microsaas.models import Usuarios,Redacao,Pagamento
+from microsaas.models import Usuarios,Redacao,Pagamento,Feedback,PasswordResetCode
 from datetime import datetime,timedelta 
 import google.generativeai as genai
 from flask_wtf.csrf import CSRFProtect
@@ -162,7 +166,7 @@ admin = Admin(
 admin.add_view(UsuarioAdminView(Usuarios, db.session, name='Usuários',   endpoint='usuarioadminview'))
 admin.add_view(RedacaoAdminView(Redacao,  db.session, name='Redações',   endpoint='redacaoadminview'))
 admin.add_view(PagamentoAdminView(Pagamento, db.session, name='Pagamentos', endpoint='pagamentoadminview'))
- 
+admin.add_view(ModelView(Feedback, db.session, name='Feedbacks', endpoint='feedbackadminview'))
 csrf.exempt(admin.name)
 
 @app.route('/admin/usuarios-lista')
@@ -384,6 +388,79 @@ Redação:
 
 def hash_password(password):
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+def normalizar_email(email):
+    return (email or '').strip().lower()
+
+
+def gerar_codigo_recuperacao():
+    return f"{secrets.randbelow(1_000_000):06d}"
+
+
+def hash_codigo(codigo):
+    return hashlib.sha256(codigo.encode('utf-8')).hexdigest()
+
+
+def limpar_codigos_expirados():
+    PasswordResetCode.query.filter(
+        PasswordResetCode.expira_em < datetime.utcnow()
+    ).delete()
+    db.session.commit()
+
+
+def enviar_email(destinatario, assunto, corpo):
+    smtp_host = os.getenv('SMTP_HOST')
+    smtp_port = int(os.getenv('SMTP_PORT', '587'))
+    smtp_user = os.getenv('SMTP_USER')
+    smtp_password = os.getenv('SMTP_PASSWORD')
+    smtp_from = os.getenv('SMTP_FROM', smtp_user or 'noreply@godredacao.com')
+    smtp_tls = os.getenv('SMTP_USE_TLS', 'true').lower() != 'false'
+
+    if not smtp_host or not smtp_user or not smtp_password:
+        raise RuntimeError('Servidor de email não configurado')
+
+    mensagem = EmailMessage()
+    mensagem['Subject'] = assunto
+    mensagem['From'] = smtp_from
+    mensagem['To'] = destinatario
+    mensagem.set_content(corpo)
+
+    with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as smtp:
+        if smtp_tls:
+            smtp.starttls()
+        smtp.login(smtp_user, smtp_password)
+        smtp.send_message(mensagem)
+
+
+def criar_e_enviar_codigo(usuario):
+    limpar_codigos_expirados()
+    codigo = gerar_codigo_recuperacao()
+
+    PasswordResetCode.query.filter_by(
+        usuario_id=usuario.id,
+        usado=False
+    ).delete()
+
+    recuperacao = PasswordResetCode(
+        usuario_id=usuario.id,
+        email=usuario.email,
+        codigo_hash=hash_codigo(codigo),
+        expira_em=datetime.utcnow() + timedelta(minutes=5)
+    )
+    db.session.add(recuperacao)
+    db.session.commit()
+
+    corpo = f"""Olá, {usuario.username}!
+
+Seu código temporário para recuperar a senha no GodRedação é: {codigo}
+
+Ele vale por 5 minutos. Se você não pediu a recuperação, ignore este email.
+"""
+    try:
+        enviar_email(usuario.email, 'Código de recuperação GodRedação', corpo)
+    except Exception:
+        db.session.delete(recuperacao)
+        db.session.commit()
+        raise
 @app.errorhandler(404)
 def pagina_nao_encontrada(e):
     return render_template('404.html'), 404
@@ -631,6 +708,95 @@ def dashboard():
                            restantes=restante,
                            usuario=current_user.username if current_user.is_authenticated else"",
                            premium=current_user.premium)
+
+
+
+@app.route('/esqueci-senha', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
+def esqueci_senha():
+    limpar_codigos_expirados()
+    etapa = request.form.get('etapa', 'email')
+    email = normalizar_email(request.form.get('email'))
+
+    if request.method == 'GET' and current_user.is_authenticated:
+        email = current_user.email
+
+    if request.method == 'POST' and etapa == 'email':
+        usuario = Usuarios.query.filter_by(email=email).first()
+        if not email:
+            return render_template('esqueci_senha.html', erro='Informe o Gmail da sua conta', email=email, etapa='email')
+        if not re.match(r'^[^@]+@[^@]+\.[^@]+$', email):
+            return render_template('esqueci_senha.html', erro='Email inválido', email=email, etapa='email')
+        if not usuario:
+            return render_template('esqueci_senha.html', erro='Não existe uma conta com esse Gmail', email=email, etapa='email')
+
+        try:
+            criar_e_enviar_codigo(usuario)
+        except RuntimeError:
+            return render_template(
+                'esqueci_senha.html',
+                erro='Não foi possível enviar o email agora. Configure SMTP_HOST, SMTP_USER e SMTP_PASSWORD.',
+                email=email,
+                etapa='email'
+            )
+        except Exception:
+            return render_template('esqueci_senha.html', erro='Erro ao enviar o código. Tente novamente em instantes.', email=email, etapa='email')
+
+        return render_template('esqueci_senha.html', sucesso='Enviamos um código de 6 dígitos válido por 5 minutos para seu Gmail.', email=email, etapa='codigo')
+
+    if request.method == 'POST' and etapa == 'codigo':
+        codigo = request.form.get('codigo', '').strip()
+        nova_senha = request.form.get('nova_senha', '')
+        confirmar = request.form.get('confirmar_senha', '')
+        usuario = Usuarios.query.filter_by(email=email).first()
+
+        if not usuario:
+            return render_template('esqueci_senha.html', erro='Conta não encontrada para este Gmail', email=email, etapa='email')
+        if len(nova_senha) < 4:
+            return render_template('esqueci_senha.html', erro='A nova senha deve conter pelo menos 4 caracteres', email=email, etapa='codigo')
+        if nova_senha != confirmar:
+            return render_template('esqueci_senha.html', erro='As senhas não coincidem', email=email, etapa='codigo')
+
+        recuperacao = PasswordResetCode.query.filter_by(
+            usuario_id=usuario.id,
+            codigo_hash=hash_codigo(codigo),
+            usado=False
+        ).order_by(PasswordResetCode.criado_em.desc()).first()
+
+        if not recuperacao or recuperacao.expira_em < datetime.utcnow():
+            return render_template('esqueci_senha.html', erro='Código inválido ou expirado. Solicite um novo código.', email=email, etapa='codigo')
+
+        usuario.senha = hash_password(nova_senha)
+        PasswordResetCode.query.filter_by(usuario_id=usuario.id).delete()
+        db.session.commit()
+        return render_template('login.html', sucesso='Senha alterada com sucesso. Entre com sua nova senha.')
+
+    return render_template('esqueci_senha.html', email=email, etapa='email')
+
+
+@app.route('/feedback', methods=['GET', 'POST'])
+@login_required
+@limiter.limit("10 per hour")
+def feedback():
+    if request.method == 'POST':
+        tipo = request.form.get('tipo', 'feedback')
+        mensagem = request.form.get('mensagem', '').strip()
+        if tipo not in ['feedback', 'bug']:
+            tipo = 'feedback'
+        if len(mensagem) < 10:
+            return render_template('feedback.html', erro='Escreva uma mensagem com pelo menos 10 caracteres', tipo=tipo, mensagem=mensagem)
+        novo_feedback = Feedback(
+            usuario_id=current_user.id,
+            usuario_nome=current_user.username,
+            email=current_user.email,
+            tipo=tipo,
+            mensagem=mensagem
+        )
+        db.session.add(novo_feedback)
+        db.session.commit()
+        return render_template('feedback.html', sucesso='Obrigado! Sua mensagem foi enviada para a equipe.', tipo='feedback', mensagem='')
+    return render_template('feedback.html', tipo='feedback', mensagem='')
+
 
 @app.route('/premium')
 @login_required

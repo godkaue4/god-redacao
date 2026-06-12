@@ -40,3 +40,23 @@ class Pagamento(db.Model):
     aprovado_em = db.Column(db.DateTime, nullable=True)
     aprovado_por = db.Column(db.Integer, nullable=True)
     observacao = db.Column(db.Text, nullable=True)
+
+class PasswordResetCode(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=False)
+    email = db.Column(db.String(120), nullable=False, index=True)
+    codigo_hash = db.Column(db.String(64), nullable=False)
+    expira_em = db.Column(db.DateTime, nullable=False)
+    usado = db.Column(db.Boolean, default=False)
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
+
+
+class Feedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    usuario_id = db.Column(db.Integer, db.ForeignKey("usuarios.id"), nullable=True)
+    usuario_nome = db.Column(db.String(80), nullable=True)
+    email = db.Column(db.String(120), nullable=True)
+    tipo = db.Column(db.String(20), default="feedback")
+    mensagem = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default="novo")
+    criado_em = db.Column(db.DateTime, default=datetime.utcnow)
