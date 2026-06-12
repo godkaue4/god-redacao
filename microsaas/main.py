@@ -202,7 +202,6 @@ def admin_deletar_usuario(id):
 @app.route('/admin/redacoes-lista')
 @admin_required
 def admin_redacoes():
-    from models import Redacao
     redacoes = Redacao.query.order_by(Redacao.criada_em.desc()).all()
     total_redacoes = Redacao.query.count()
     return render_template('admin/redacoes.html', redacoes=redacoes, total_redacoes=total_redacoes)
