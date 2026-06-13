@@ -245,6 +245,45 @@ def admin_pagamentos():
     rejeitados=Pagamento.query.filter_by(status='rejeitado').count()
     pendentes=Pagamento.query.filter_by(status='pendente').count()
     return render_template('admin/pagamentos.html', pagamentos=pagamentos, total=total, aprovados=aprovados, rejeitados=rejeitados, pendentes=pendentes)
+@app.route('/admin/feedbacks-lista')
+@admin_required
+def admin_feedbacks():
+    feedbacks = Feedback.query.order_by(Feedback.criado_em.desc()).all()
+    total = len(feedbacks)
+    bugs = Feedback.query.filter_by(tipo='bug').count()
+    sugestoes = Feedback.query.filter_by(tipo='feedback').count()
+    novos = Feedback.query.filter_by(status='novo').count()
+    return render_template(
+        'admin/feedbacks.html',
+        feedbacks=feedbacks,
+        total=total,
+        bugs=bugs,
+        sugestoes=sugestoes,
+        novos=novos
+    )
+
+
+@app.route('/admin/feedback/<int:id>/status', methods=['POST'])
+@admin_required
+def admin_atualizar_feedback(id):
+    feedback_item = Feedback.query.get_or_404(id)
+    status = request.form.get('status', 'novo')
+    if status not in ['novo', 'lido', 'resolvido']:
+        status = 'novo'
+    feedback_item.status = status
+    db.session.commit()
+    flash('Status do feedback atualizado.', 'success')
+    return redirect(url_for('admin_feedbacks'))
+
+
+@app.route('/admin/feedback/<int:id>/deletar', methods=['POST'])
+@admin_required
+def admin_deletar_feedback(id):
+    feedback_item = Feedback.query.get_or_404(id)
+    db.session.delete(feedback_item)
+    db.session.commit()
+    flash('Feedback deletado com sucesso.', 'success')
+    return redirect(url_for('admin_feedbacks'))
 def organizar_resposta(resposta):
     partes = {
         'nota': '',

@@ -1,0 +1,121 @@
+{% extends 'admin/base.html' %}
+
+{% block titulo %}Feedbacks{% endblock %}
+
+{% block extra_head %}
+<style>
+    .search-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; color: var(--text); font-family: var(--font-body); font-size: 0.87rem; outline: none; transition: border-color 0.2s; }
+    .search-input:focus { border-color: var(--accent); }
+    .btn { padding: 8px 14px; border-radius: 9px; font-size: 0.8rem; font-weight: 600; font-family: var(--font-body); cursor: pointer; border: none; transition: opacity 0.2s, transform 0.1s; text-decoration: none; display: inline-flex; align-items: center; gap: 7px; }
+    .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: white; }
+    .btn-red { background: rgba(248,113,113,0.15); color: var(--red); border: 1px solid rgba(248,113,113,0.3); }
+    .feedback-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; margin-bottom: 14px; }
+    .feedback-header { display: flex; justify-content: space-between; gap: 14px; align-items: flex-start; margin-bottom: 12px; }
+    .feedback-meta { color: var(--muted); font-size: 0.78rem; margin-top: 4px; }
+    .feedback-message { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; color: var(--text); line-height: 1.6; white-space: pre-wrap; }
+    .feedback-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; align-items: center; }
+    .status-select { background: var(--surface2); border: 1px solid var(--border); color: var(--text); border-radius: 9px; padding: 8px 12px; font-family: var(--font-body); }
+    .stat-number { font-family: var(--font-head); font-size: 1.7rem; font-weight: 800; color: var(--text); }
+    .stat-label { color: var(--muted); font-size: 0.78rem; margin-top: 3px; }
+    .empty-state { text-align: center; padding: 50px 20px; color: var(--muted); }
+    .empty-state i { font-size: 2.5rem; opacity: 0.2; margin-bottom: 12px; display: block; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; gap:16px; flex-wrap:wrap;">
+    <div>
+        <h2 style="font-family:var(--font-head);font-size:1.3rem;font-weight:800;color:var(--text);">Feedbacks</h2>
+        <p style="color:var(--muted);font-size:0.83rem;margin-top:3px;">Mensagens, sugestões e bugs enviados pelos usuários.</p>
+    </div>
+</div>
+
+<div class="grid-4" style="margin-bottom:18px;">
+    <div class="card">
+        <div class="stat-number">{{ total }}</div>
+        <div class="stat-label">Total</div>
+    </div>
+    <div class="card">
+        <div class="stat-number">{{ novos }}</div>
+        <div class="stat-label">Novos</div>
+    </div>
+    <div class="card">
+        <div class="stat-number">{{ bugs }}</div>
+        <div class="stat-label">Bugs</div>
+    </div>
+    <div class="card">
+        <div class="stat-number">{{ sugestoes }}</div>
+        <div class="stat-label">Sugestões</div>
+    </div>
+</div>
+
+<div style="margin-bottom:18px;">
+    <input type="text" class="search-input" id="searchInput" placeholder="Buscar por usuário, email, tipo, status ou mensagem..." oninput="filtrarFeedbacks()">
+</div>
+
+<div id="feedbackList">
+    {% for f in feedbacks %}
+    <div class="feedback-card" data-search="{{ (f.usuario_nome ~ ' ' ~ f.email ~ ' ' ~ f.tipo ~ ' ' ~ f.status ~ ' ' ~ f.mensagem)|lower }}">
+        <div class="feedback-header">
+            <div>
+                <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                    {% if f.tipo == 'bug' %}
+                        <span class="badge badge-red"><i class="fas fa-bug"></i> Bug</span>
+                    {% else %}
+                        <span class="badge badge-purple"><i class="fas fa-lightbulb"></i> Feedback</span>
+                    {% endif %}
+                    {% if f.status == 'resolvido' %}
+                        <span class="badge badge-green">Resolvido</span>
+                    {% elif f.status == 'lido' %}
+                        <span class="badge badge-yellow">Lido</span>
+                    {% else %}
+                        <span class="badge badge-gray">Novo</span>
+                    {% endif %}
+                </div>
+                <div class="feedback-meta">
+                    <strong style="color:var(--text);">{{ f.usuario_nome or 'Usuário removido' }}</strong>
+                    · {{ f.email or 'sem email' }}
+                    · {{ f.criado_em.strftime('%d/%m/%Y %H:%M') if f.criado_em else 'sem data' }}
+                </div>
+            </div>
+            <span style="color:var(--muted);font-size:0.78rem;">#{{ f.id }}</span>
+        </div>
+
+        <div class="feedback-message">{{ f.mensagem }}</div>
+
+        <div class="feedback-actions">
+            <form method="POST" action="/admin/feedback/{{ f.id }}/status" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <select name="status" class="status-select">
+                    <option value="novo" {% if f.status == 'novo' %}selected{% endif %}>Novo</option>
+                    <option value="lido" {% if f.status == 'lido' %}selected{% endif %}>Lido</option>
+                    <option value="resolvido" {% if f.status == 'resolvido' %}selected{% endif %}>Resolvido</option>
+                </select>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Atualizar</button>
+            </form>
+            <form method="POST" action="/admin/feedback/{{ f.id }}/deletar" onsubmit="return confirm('Deletar este feedback?')">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-red"><i class="fas fa-trash"></i> Deletar</button>
+            </form>
+        </div>
+    </div>
+    {% else %}
+    <div class="card">
+        <div class="empty-state">
+            <i class="fas fa-comment-dots"></i>
+            Nenhum feedback enviado ainda.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+function filtrarFeedbacks() {
+    const busca = document.getElementById('searchInput').value.toLowerCase();
+    document.querySelectorAll('.feedback-card').forEach(card => {
+        card.style.display = card.dataset.search.includes(busca) ? '' : 'none';
+    });
+}
+</script>
+{% endblock %}

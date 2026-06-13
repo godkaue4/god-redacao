@@ -88,8 +88,11 @@
         <a href="/admin/redacoes-lista">
             <i class="fas fa-file-alt"></i> Redações
         </a>
-        <a href="/admin/pagamentos-lista">
+        <a href="/admin/pagamentos-lista "class="{{ 'active' if request.path == '/admin/pagamentos-lista' }}">
             <i class="fas fa-credit-card"></i> Pagamentos
+        </a>
+        <a href="/admin/feedbacks-lista" class="{{ 'active' if request.path == '/admin/feedbacks-lista' }}">
+            <i class="fas fa-comment-dots"></i> Feedbacks
         </a>
         <div class="nav-section" style="margin-top:8px;">Sistema</div>
         <a href="/" target="_blank">
