@@ -117,14 +117,13 @@
             font-size: 0.85rem;
             margin-bottom: 16px;
         }
-        .lnr-eye {
-        position: absolute;
-        top: 5px;
-        right: 10px;
-        cursor: pointer;
-        color: var(--muted);
-        animation: blink 3s infinite;
-        transition: color 0.2s;
+        .senha-container { position: relative; }
+        .olho{
+            position:absolute;
+            right:15px;
+            top:42px;
+            cursor:pointer;
+            color:var(--muted);
         }
     </style>
 </head>
@@ -148,15 +147,15 @@
                 <label for="usuario">Usuário</label>
                 <input type="text" id="usuario" name="usuarioform" placeholder="Digite seu nome de usuário">
             </div>
-            <div class="field">
+            <div class="field senha-container">
                 <label for="senha">Senha</label>
                 <input type="password" id="senha" name="senhaform" placeholder="Digite sua senha">
-                <span class="lnr lnr-eye" id="botaoOlho"></span>
+                <span class="lnr lnr-eye olho" id="botaoOlho" data-target="senha"></span>
             </div>
-            <div class="field">
+            <div class="field senha-container">
                 <label for="confirmarsenha">Confirmar Senha</label>
                 <input type="password" id="confirmarsenha" name="confirmarsenhaform" placeholder="Confirme sua senha">
-                <span class="lnr lnr-eye" id="botaoOlho"></span>
+                <span class="lnr lnr-eye olho" id="botaoOlho" data-target="confirmarsenha"></span>
             </div>
             <button class="btn btn-primary" type="submit">cadastrar</button>
         </form>
@@ -168,15 +167,29 @@
 </body>
 </html>
 <script>
-    const senhaInput = document.getElementById('senha');
-    const confirmarSenhaInput = document.getElementById('confirmarsenha');
-    const botaoOlho = document.getElementById('botaoOlho');
+    document.querySelectorAll('.olho').forEach(botao => {
 
-    botaoOlho.addEventListener('click', () => {
-        const tipo = senhaInput.getAttribute('type') === 'password' ? 'text' : 'password';
-        senhaInput.setAttribute('type', tipo);
-        confirmarSenhaInput.setAttribute('type', tipo);
-        botaoOlho.classList.toggle('lnr-eye');
-        botaoOlho.classList.toggle('lnr-eye-crossed');
+    botao.addEventListener('click', () => {
+
+        const input = document.getElementById(
+            botao.dataset.target
+        );
+
+        if(input.type === 'password'){
+            input.type = 'text';
+            botao.classList.replace(
+                'lnr-eye',
+                'lnr-eye-crossed'
+            );
+        }else{
+            input.type = 'password';
+            botao.classList.replace(
+                'lnr-eye-crossed',
+                'lnr-eye'
+            );
+        }
+
     });
+
+});
 </script>
