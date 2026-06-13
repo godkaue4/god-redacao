@@ -13,6 +13,7 @@ from flask_admin import Admin, BaseView, expose
 import hashlib
 import secrets
 import smtplib
+import socket
 from email.message import EmailMessage
 from flask_admin.contrib.sqla import ModelView
 from flask import redirect, url_for
@@ -441,6 +442,12 @@ def enviar_email(destinatario, assunto, corpo):
     print("PORT:", smtp_port)
     print("USER:", smtp_user)
     print("TLS:", smtp_tls)
+    print(socket.gethostbyname("smtp.gmail.com"))
+    try:
+        socket.create_connection(("smtp.gmail.com", 587), timeout=10)
+        print("Conexão OK")
+    except Exception as e:
+        print("Erro de conexão:", repr(e))
     with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as smtp:
         if smtp_tls:
             smtp.starttls()
