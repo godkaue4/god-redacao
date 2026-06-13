@@ -12,9 +12,8 @@ from flask import Flask
 from flask_admin import Admin, BaseView, expose
 import hashlib
 import secrets
-import smtplib
 import socket
-from email.message import EmailMessage
+import requests
 from flask_admin.contrib.sqla import ModelView
 from flask import redirect, url_for
 from microsaas.BD import db
@@ -420,41 +419,30 @@ def env_bool(valor, default=True):
     if valor is None:
         return default
     return str(valor).strip().lower() in ['1', 'true', 't', 'yes', 'y', 'sim', 's']
+
 def enviar_email(destinatario, assunto, corpo):
-    smtp_host = getenv_any('SMTP_HOST', 'smtp_host')
-    smtp_port = int(getenv_any('SMTP_PORT', 'smtp_port', default='587'))
-    smtp_user = getenv_any('SMTP_USER', 'smtp_user')
-    smtp_password = getenv_any('SMTP_PASSWORD', 'smtp_password')
-    smtp_from = getenv_any('SMTP_FROM', 'smtp_from', default=smtp_user or 'noreply@godredacao.com')
-    smtp_tls = env_bool(getenv_any('SMTP_USE_TLS', 'SMTP_TLS', 'smtp_use_tls', 'smtp_tls'), default=True)
 
-    if not smtp_host or not smtp_user or not smtp_password:
-        raise RuntimeError('Servidor de email não configurado')
+    api_key = os.getenv("RESEND_API_KEY")
 
-    mensagem = EmailMessage()
-    mensagem['Subject'] = assunto
-    mensagem['From'] = smtp_from
-    mensagem['To'] = destinatario
-    mensagem.set_content(corpo)
-    print("SMTP_HOST =", smtp_host)
-    print("SMTP_PORT =", smtp_port)
-    print("HOST:", smtp_host)
-    print("PORT:", smtp_port)
-    print("USER:", smtp_user)
-    print("TLS:", smtp_tls)
-    print(socket.gethostbyname("smtp.gmail.com"))
-    try:
-        socket.create_connection(("smtp.gmail.com", 587), timeout=10)
-        print("Conexão OK")
-    except Exception as e:
-        print("Erro de conexão:", repr(e))
-    with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as smtp:
-        if smtp_tls:
-            smtp.starttls()
-        smtp.login(smtp_user, smtp_password)
-        smtp.send_message(mensagem)
+    resposta = requests.post(
+        "https://api.resend.com/emails",
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "from": "onboarding@resend.dev",
+            "to": [destinatario],
+            "subject": assunto,
+            "text": corpo
+        }
+    )
 
+    print(resposta.status_code)
+    print(resposta.text)
 
+    if resposta.status_code >= 400:
+        raise Exception(resposta.text)
 def criar_e_enviar_codigo(usuario):
     limpar_codigos_expirados()
     codigo = gerar_codigo_recuperacao()
