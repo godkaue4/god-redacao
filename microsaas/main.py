@@ -7,7 +7,7 @@ from werkzeug.utils import secure_filename
 from functools import wraps
 from dotenv import load_dotenv
 from flask_limiter import Limiter
-from flask import render_template, request,jsonify
+from flask import render_template, request,jsonify,flash
 from flask import Flask
 from flask_admin import Admin, BaseView, expose
 import hashlib
@@ -407,13 +407,25 @@ def limpar_codigos_expirados():
     db.session.commit()
 
 
+def getenv_any(*nomes, default=None):
+    for nome in nomes:
+        valor = os.getenv(nome)
+        if valor is not None and valor != '':
+            return valor
+    return default
+
+
+def env_bool(valor, default=True):
+    if valor is None:
+        return default
+    return str(valor).strip().lower() in ['1', 'true', 't', 'yes', 'y', 'sim', 's']
 def enviar_email(destinatario, assunto, corpo):
-    smtp_host = os.getenv('SMTP_HOST')
-    smtp_port = int(os.getenv('SMTP_PORT', '587'))
-    smtp_user = os.getenv('SMTP_USER')
-    smtp_password = os.getenv('SMTP_PASSWORD')
-    smtp_from = os.getenv('SMTP_FROM', smtp_user or 'noreply@godredacao.com')
-    smtp_tls = os.getenv('SMTP_USE_TLS', 'true').lower() != 'false'
+    smtp_host = getenv_any('SMTP_HOST', 'smtp_host')
+    smtp_port = int(getenv_any('SMTP_PORT', 'smtp_port', default='587'))
+    smtp_user = getenv_any('SMTP_USER', 'smtp_user')
+    smtp_password = getenv_any('SMTP_PASSWORD', 'smtp_password')
+    smtp_from = getenv_any('SMTP_FROM', 'smtp_from', default=smtp_user or 'noreply@godredacao.com')
+    smtp_tls = env_bool(getenv_any('SMTP_USE_TLS', 'SMTP_TLS', 'smtp_use_tls', 'smtp_tls'), default=True)
 
     if not smtp_host or not smtp_user or not smtp_password:
         raise RuntimeError('Servidor de email não configurado')
@@ -735,11 +747,12 @@ def esqueci_senha():
         except RuntimeError:
             return render_template(
                 'esqueci_senha.html',
-                erro='Não foi possível enviar o email agora. Configure SMTP_HOST, SMTP_USER e SMTP_PASSWORD.',
+                erro='Não foi possível enviar o email agora.',
                 email=email,
                 etapa='email'
             )
-        except Exception:
+        except Exception as e:
+            print("Erro ao enviar email:", e)        
             return render_template('esqueci_senha.html', erro='Erro ao enviar o código. Tente novamente em instantes.', email=email, etapa='email')
 
         return render_template('esqueci_senha.html', sucesso='Enviamos um código de 6 dígitos válido por 5 minutos para seu Gmail.', email=email, etapa='codigo')
