@@ -435,7 +435,8 @@ def enviar_email(destinatario, assunto, corpo):
     mensagem['From'] = smtp_from
     mensagem['To'] = destinatario
     mensagem.set_content(corpo)
-
+    print("SMTP_HOST =", smtp_host)
+    print("SMTP_PORT =", smtp_port)
     with smtplib.SMTP(smtp_host, smtp_port, timeout=15) as smtp:
         if smtp_tls:
             smtp.starttls()
