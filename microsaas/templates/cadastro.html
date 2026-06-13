@@ -112,6 +112,28 @@
             font-size: 0.85rem;
             margin-bottom: 16px;
         }
+        .mostrar-senha {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
+        .confirmar-senha {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+        }
     </style>
 </head>
 <body>
@@ -137,10 +159,12 @@
             <div class="field">
                 <label for="senha">Senha</label>
                 <input type="password" id="senha" name="senhaform" placeholder="Digite sua senha">
+                <button type="button" id="mostrarSenha">Mostrar</button>
             </div>
             <div class="field">
                 <label for="confirmarsenha">Confirmar Senha</label>
                 <input type="password" id="confirmarsenha" name="confirmarsenhaform" placeholder="Confirme sua senha">
+                <button type="button" id="mostrarConfirmarSenha">Mostrar</button>
             </div>
             <button class="btn btn-primary" type="submit">cadastrar</button>
         </form>
@@ -151,3 +175,28 @@
    </div>
 </body>
 </html>
+<script>
+const inputSenha = document.getElementById('senhaform');
+const botaoMostrar = document.getElementById('mostrarSenha');
+const botaomostrarconfirmarsenha = document.getElementById('mostrarConfirmarSenha');
+botaomostrarconfirmarsenha.addEventListener('click', function() {
+  const inputConfirmarSenha = document.getElementById('confirmarsenhaform');
+  if (inputConfirmarSenha.type === 'password') {
+    inputConfirmarSenha.type = 'text';
+    botaomostrarconfirmarsenha.textContent = 'Ocultar'; // Opcional: mudar texto do botão
+  } else {
+    inputConfirmarSenha.type = 'password';
+    botaomostrarconfirmarsenha.textContent = 'Mostrar'; // Opcional: mudar texto do botão
+  }
+});
+
+botaoMostrar.addEventListener('click', function() {
+  if (inputSenha.type === 'password') {
+    inputSenha.type = 'text';
+    botaoMostrar.textContent = 'Ocultar'; // Opcional: mudar texto do botão
+  } else {
+    inputSenha.type = 'password';
+    botaoMostrar.textContent = 'Mostrar'; // Opcional: mudar texto do botão
+  }
+});   
+</script>
