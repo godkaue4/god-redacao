@@ -671,36 +671,26 @@ def homepage():
     return render_template('home page.html',usuario=current_user.username if current_user.is_authenticated else"")
 def gerar_tema():
     prompt = """
-Você é um elaborador oficial de temas do ENEM.
+Você é um membro especialista da banca elaboradora da prova de Redação do ENEM (INEP). Seu objetivo é criar uma proposta de redação COMPLETA, INÉDITA e ALTAMENTE REALISTA, simulando com precisão o rigor técnico, o estilo de linguagem e a estrutura do exame oficial.
 
-Crie uma proposta COMPLETA e REALISTA no estilo do INEP.
-
-Retorne APENAS JSON VÁLIDO:
+Gere como resposta APENAS um objeto JSON válido, sem qualquer tipo de formatação Markdown (como blocos de código ```json), introduções ou explicações externas. O arquivo deve seguir estritamente esta estrutura:
 
 {
-  "titulo": "",
+  "titulo": "TEXTOS MOTIVADORES",
   "textos": [
-    "",
-    "",
-    ""
+    "Texto 1: [Contextualização histórica, legislativa ou sociológica profunda sobre o problema. Deve usar linguagem formal, citar pensadores, leis, tratados ou transformações sociais reais, estabelecendo a raiz do problema no cenário brasileiro.]",
+    "Texto 2: [Apresentação de dados estatísticos expressivos, de preferência simulando uma análise de pesquisa (como IBGE, IPEA ou portais renomados). O texto deve descrever os dados de forma discursiva, apontando a gravidade e a abrangência da questão no Brasil contemporâneo.]",
+    "Texto 3: [Perspectiva crítica, filosófica ou comportamental. Pode simular um fragmento de artigo de opinião ou ensaio acadêmico que debata as causas subjetivas, o papel da tecnologia ou os impasses éticos que perpetuam o problema, trazendo um contraponto ou aprofundamento interpretativo.]",
+    "Texto 4: [Infográfico discursivo ou síntese de impacto. Um texto mais curto e direto que conecte o problema à dignidade humana, aos direitos de cidadania ou aos impactos psicossociais na população afetada.]"
   ],
-  "proposta": ""
+  "proposta": "PROPOSTA DE REDAÇÃO\n\nA partir da leitura dos textos motivadores e com base nos conhecimentos construídos ao longo de sua formação, redija um texto dissertativo-argumentativo em modalidade escrita formal da língua portuguesa sobre o tema \"[INSERIR TEMA AQUI]\", apresentando proposta de intervenção que respeite os direitos humanos. Selecione, organize e relacione, de forma coerente e coesa, argumentos e fatos para defesa de seu ponto de vista."
 }
 
-REGRAS:
-
-- O tema deve ser social, filosófico, político ou tecnológico
-- Deve parecer um tema REAL do ENEM
-- Os textos motivadores devem:
-  - ter dados
-  - contextualização
-  - opiniões diferentes
-  - linguagem formal
-- A proposta deve seguir o estilo oficial do ENEM
-- NÃO use markdown
-- NÃO explique nada fora do JSON
-- Gere textos longos e ricos
-- Não repita temas famosos do ENEM
+REGRAS CRÍTICAS DE CONTEÚDO E FORMATO:
+1. DIRETRIZ DO TEMA: O tema deve abordar uma problemática social, política, tecnológica ou cultural de relevância nacional no Brasil atual. Deve ser complexo, permitindo múltiplas camadas de análise.
+2. INÉDITO E ANTIRREPETIÇÃO: Evite absolutamente eixos temáticos saturados ou que já foram cobrados no ENEM (como democratização do cinema, invisibilidade do registro civil, persistência da violência contra a mulher, estigma das doenças mentais, valorização de comunidades tradicionais ou desafios da comunidade surda). Busque novas vertentes de vulnerabilidade ou debates contemporâneos.
+3. RIQUEZA TEXTUAL: Os textos motivadores devem ser longos, densos, informativos e com vocabulário formal padrão-culto. Eles não devem dar respostas prontas, mas sim delimitar o problema para que o estudante possa recortá-lo.
+4. SAÍDA PURA: O caractere de escape para quebras de linha dentro das strings do JSON deve ser apenas '\\n'. Não inclua nenhuma palavra antes ou depois do JSON.
 """
 
     resposta = model.generate_content(prompt)
