@@ -963,7 +963,7 @@ def reenviar_codigo():
     
     user=current_user
     gmail=user.email
-    código=f"{secrets.randbelow(1_000_000):06d}"
+    codigo=f"{secrets.randbelow(1_000_000):06d}"
     user.codigo=codigo
     db.session.commit()
   
