@@ -6,6 +6,8 @@ class Usuarios(db.Model,UserMixin):
     id=db.Column(db.Integer,primary_key=True)
     is_admin=db.Column(db.Boolean,default=False)
     email=db.Column(db.String(120),unique=True)
+    email_confirmado=db.Column(db.Boolean,default=False)
+    codigo_confirmacao=db.Column(db.String(64), nullable=True)
     premium=db.Column(db.Boolean,default=False)
     username=db.Column(db.String(80),unique=True)
     senha=db.Column(db.LargeBinary)
@@ -14,8 +16,7 @@ class Usuarios(db.Model,UserMixin):
     data_assinatura=db.Column(db.DateTime, nullable=True)
     status_pagamento=db.Column(db.String(20), default='ativo')
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
-    email_confirmado=db.Column(db.Boolean,default=False)
-    codigo_confirmacao=db.Column(db.String(64), nullable=True)
+
     
 class Redacao(db.Model):
     id=db.Column(db.Integer,primary_key=True)
