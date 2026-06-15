@@ -568,7 +568,6 @@ def logout():
     return redirect(url_for('homepage'))
 @app.route('/api/corretor', methods=['POST'])
 @login_required
-@limiter.limit("3 per month", error_message="Limite de correções atingido. Faça upgrade para premium ou aguarde o próximo mês.")
 @csrf.exempt
 def api_corretor():
     user = db.session.get(Usuarios, current_user.id)
