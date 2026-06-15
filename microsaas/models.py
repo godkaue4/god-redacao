@@ -7,7 +7,7 @@ class Usuarios(db.Model,UserMixin):
     is_admin=db.Column(db.Boolean,default=False)
     email=db.Column(db.String(120),unique=True)
     email_confirmado=db.Column(db.Boolean,default=False)
-    codigo_confirmacao=db.Column(db.String(64), nullable=True)
+    codigo=db.Column(db.String(64), nullable=True)
     premium=db.Column(db.Boolean,default=False)
     username=db.Column(db.String(80),unique=True)
     senha=db.Column(db.LargeBinary)
