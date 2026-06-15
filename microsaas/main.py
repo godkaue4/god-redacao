@@ -1,6 +1,7 @@
 import json
 import bcrypt
 from flask_migrate import Migrate
+import random
 import os
 import re
 from werkzeug.utils import secure_filename
@@ -931,7 +932,7 @@ def cadastrar():
         erro=verificaçoes(gmail,user,key,confirmar)
         if erro:
             return render_template('cadastro.html',erro=erro)
-        codigo=gerar_codigo_recuperacao()
+        codigo=f"{random.randint(0,999999):06d}"
         novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo_confirmacao=codigo,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
