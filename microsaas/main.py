@@ -935,7 +935,7 @@ def cadastrar():
         novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo_confirmacao=codigo,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
-        if Usuarios.email:
+        if novo_usuario.email:
             login_user(novo_usuario,remember=True)
             return redirect(url_for('dashboard'))
         else:
@@ -949,7 +949,7 @@ def confirmar_email():
 
     if request.method == 'POST':
         codigo = request.form.get('codigo', '').strip()
-        if codigo == current_user.codigo_confirmacao:
+        if codigo == current_user.codigo:
             current_user.email_confirmado = True
             db.session.commit()
             return redirect(url_for('dashboard'))   
@@ -960,9 +960,12 @@ def confirmar_email():
 @app.route('/reenviar-codigo')
 def reenviar_codigo():
     
-    user=db.session.query(Usuarios)
+    user=current_user
     gmail=user.email
-    codigo=f"{secrets.randbelow(1_000_000):06d}"
+    código=f"{secrets.randbelow(1_000_000):06d}"
+    user.codigo=codigo
+    db.session.commit()
+  
     enviar_email(gmail,'Confirmação de email GodRedação',f"Olá, {user}! Use este código para confirmar seu email: {codigo}")
     return redirect(url_for("confirmar-email"))
 def verificaçoeslogin(user,key):
