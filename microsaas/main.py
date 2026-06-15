@@ -931,15 +931,16 @@ def cadastrar():
         erro=verificaçoes(gmail,user,key,confirmar)
         if erro:
             return render_template('cadastro.html',erro=erro)
-        codigo=f"{secrets.randbelow(1_000_000):06d}"
+        codigo=gerar_codigo_recuperacao()
         novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo_confirmacao=codigo,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
-        if Usuarios.email_confirmado==False:
+        if Usuarios.email:
+            login_user(novo_usuario,remember=True)
+            return redirect(url_for('dashboard'))
+        else:
             enviar_email(gmail,'Confirmação de email GodRedação',f"Olá, {user}! Use este código para confirmar seu email: {codigo}")
             return redirect(url_for('confirmar_email'))
-        login_user(novo_usuario,remember=True)
-        return redirect(url_for('dashboard'))
     return render_template('cadastro.html')
 @app.route('/confirmar-email', methods=['GET', 'POST'])
 def confirmar_email():
