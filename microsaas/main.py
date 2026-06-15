@@ -918,6 +918,7 @@ def login():
 
 @app.route('/cadastrar',methods=['GET','POST'])
 @limiter.limit("10 per minute")        
+@limiter.limit("5 per day")
 def cadastrar():
     
     if request.method=='POST':
@@ -930,14 +931,40 @@ def cadastrar():
         erro=verificaçoes(gmail,user,key,confirmar)
         if erro:
             return render_template('cadastro.html',erro=erro)
-    
-        novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha)
+        codigo=f"{secrets.randbelow(1_000_000):06d}"
+        novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo_confirmacao=codigo,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
+        if Usuarios.email_confirmado==False:
+            enviar_email(gmail,'Confirmação de email GodRedação',f"Olá, {user}! Use este código para confirmar seu email: {codigo}")
+            return redirect(url_for('confirmar_email'))
         login_user(novo_usuario,remember=True)
         return redirect(url_for('dashboard'))
     return render_template('cadastro.html')
+@app.route('/confirmar-email', methods=['GET', 'POST'])
+@login_required
+def confirmar_email():
+    if current_user.email_confirmado:
+        return redirect(url_for('dashboard'))
 
+    if request.method == 'POST':
+        codigo = request.form.get('codigo', '').strip()
+        if codigo == current_user.codigo_confirmacao:
+            current_user.email_confirmado = True
+            db.session.commit()
+            return redirect(url_for('dashboard'))   
+        else:
+            return render_template('confirmar_email.html', erro='Código incorreto. Verifique seu email e tente novamente.')
+
+    return render_template('confirmar_email.html')
+@app.route('/reenviar-codigo')
+def reenviar_codigo():
+    
+    user=db.session.query(Usuarios)
+    gmail=user.email
+    codigo=f"{secrets.randbelow(1_000_000):06d}"
+    enviar_email(gmail,'Confirmação de email GodRedação',f"Olá, {user}! Use este código para confirmar seu email: {codigo}")
+    return redirect(url_for("confirmar-email"))
 def verificaçoeslogin(user,key):
     
     if not user or not key:

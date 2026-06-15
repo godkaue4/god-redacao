@@ -14,7 +14,8 @@ class Usuarios(db.Model,UserMixin):
     data_assinatura=db.Column(db.DateTime, nullable=True)
     status_pagamento=db.Column(db.String(20), default='ativo')
     criado_em = db.Column(db.DateTime, default=datetime.utcnow)
-
+    email_confirmado=db.Column(db.Boolean,default=False)
+    codigo_confirmacao=db.Column(db.String(64), nullable=True)
     
 class Redacao(db.Model):
     id=db.Column(db.Integer,primary_key=True)
