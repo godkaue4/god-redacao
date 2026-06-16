@@ -935,7 +935,7 @@ def cadastrar():
         
         codigo=f"{random.randint(0,999999):06d}"
         codigo_hash=hash_codigo(codigo)
-        novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo_confirmacao=codigo,email_confirmado=False)
+        novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo_confirmacao=codigo_hash,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
         if novo_usuario.email:
