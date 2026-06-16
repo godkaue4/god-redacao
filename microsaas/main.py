@@ -935,21 +935,17 @@ def cadastrar():
         
         codigo=f"{random.randint(0,999999):06d}"
         codigo_hash=hash_codigo(codigo)
-        novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo_confirmacao=codigo_hash,email_confirmado=False)
+        novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo=codigo_hash,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
-        if novo_usuario.email:
-            login_user(novo_usuario,remember=True)
-            return redirect(url_for('dashboard'))
-        usuario = Usuarios.query.filter_by(email=gmail).first()
-        corpo = f"""Olá, {usuario.username}!
+        corpo = f"""Olá, {novo_usuario.username}!
 
         Seu código temporário para confirmar o gmail no GodRedação é: {codigo}
 
         Ele vale por 5 minutos. Se você não pediu a recuperação, ignore este email.
         """
         try:
-            enviar_email(usuario.email, 'Código de verificação,GodRedação', corpo)
+            enviar_email(novo_usuario.email, 'Código de verificação,GodRedação', corpo)
             return redirect(url_for('confirmar_email'))
         except Exception as e:
             print('não foi possivel enviar o emgail erro:',e)
@@ -962,7 +958,7 @@ def confirmar_email():
 
     if request.method == 'POST':
         codigo = request.form.get('codigo', '').strip()
-        if codigo == current_user.codigo:
+        if hash_codigo(codigo) == current_user.codigo:
             current_user.email_confirmado = True
             db.session.commit()
             return redirect(url_for('dashboard'))   
@@ -980,7 +976,7 @@ def reenviar_codigo():
     db.session.commit()
   
     enviar_email(gmail,'Confirmação de email GodRedação',f"Olá, {user}! Use este código para confirmar seu email: {codigo}")
-    return redirect(url_for("confirmar-email"))
+    return redirect(url_for("confirmar_email"))
 def verificaçoeslogin(user,key):
     
     if not user or not key:
