@@ -932,6 +932,7 @@ def cadastrar():
         erro=verificaçoes(gmail,user,key,confirmar)
         if erro:
             return render_template('cadastro.html',erro=erro)
+        
         codigo=f"{random.randint(0,999999):06d}"
         novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo_confirmacao=codigo,email_confirmado=False)
         db.session.add(novo_usuario)
@@ -939,9 +940,19 @@ def cadastrar():
         if novo_usuario.email:
             login_user(novo_usuario,remember=True)
             return redirect(url_for('dashboard'))
-        else:
-            enviar_email(gmail,'Confirmação de email GodRedação',f"Olá, {user}! Use este código para confirmar seu email: {codigo}")
+        usuario = Usuarios.query.filter_by(email=gmail).first()
+        corpo = f"""Olá, {usuario.username}!
+
+        Seu código temporário para confirmar o gmail no GodRedação é: {codigo}
+
+        Ele vale por 5 minutos. Se você não pediu a recuperação, ignore este email.
+        """
+        try:
+            enviar_email(usuario.email, 'Código de verificação,GodRedação', corpo)
             return redirect(url_for('confirmar_email'))
+        except Exception as e:
+            print('não foi possivel enviar o emgail erro:',e)
+            return redirect(url_for('cadastro'))
     return render_template('cadastro.html')
 @app.route('/confirmar-email', methods=['GET', 'POST'])
 def confirmar_email():
