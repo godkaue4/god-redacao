@@ -934,6 +934,7 @@ def cadastrar():
             return render_template('cadastro.html',erro=erro)
         
         codigo=f"{random.randint(0,999999):06d}"
+        codigo_hash=hash_codigo(codigo)
         novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo_confirmacao=codigo,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
