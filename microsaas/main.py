@@ -916,6 +916,40 @@ def login():
         login_user(user,remember=True)        
         return redirect(url_for('dashboard'))
     return render_template('login.html')
+def criar_e_enviar_codigo_confirmacao(usuario):
+    """Igual ao criar_e_enviar_codigo, mas para confirmação de email no cadastro."""
+    codigo = f"{secrets.randbelow(1_000_000):06d}"
+
+    # Apaga códigos antigos não usados desse usuário
+    PasswordResetCode.query.filter_by(
+        usuario_id=usuario.id,
+        usado=False
+    ).delete()
+
+    registro = PasswordResetCode(
+        usuario_id=usuario.id,
+        email=usuario.email,
+        codigo_hash=hash_codigo(codigo),
+        expira_em=datetime.utcnow() + timedelta(minutes=10)
+    )
+    db.session.add(registro)
+    db.session.commit()
+
+    corpo = f"""Olá, {usuario.username}!
+
+Seu código para confirmar o email no GodRedação é: {codigo}
+
+Ele é válido por 10 minutos.
+Se não foi você, ignore este email.
+"""
+    try:
+        enviar_email(usuario.email, 'Confirme seu email - GodRedação', corpo)
+    except Exception:
+        # Se falhar, apaga o registro para não deixar lixo no banco
+        db.session.delete(registro)
+        db.session.commit()
+        raise
+
 
 @app.route('/cadastrar',methods=['GET','POST'])
 @limiter.limit("10 per minute")        
@@ -938,45 +972,45 @@ def cadastrar():
         novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo=codigo_hash,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
-        corpo = f"""Olá, {novo_usuario.username}!
-
-        Seu código temporário para confirmar o gmail no GodRedação é: {codigo}
-
-        Ele vale por 5 minutos. Se você não pediu a recuperação, ignore este email.
-        """
+        login_user(novo_usuario,remember=True)
         try:
-            enviar_email(novo_usuario.email, 'Código de verificação,GodRedação', corpo)
-            return redirect(url_for('confirmar_email'))
+            criar_e_enviar_codigo_confirmacao(novo_usuario)
+            return redirect(url_for('confirmar_senha'))
         except Exception as e:
-            print('não foi possivel enviar o emgail erro:',e)
-            return redirect(url_for('cadastro'))
+            print("erro ao enviar o gmail",e)
+            return redirect(url_for("dashboard"))
     return render_template('cadastro.html')
 @app.route('/confirmar-email', methods=['GET', 'POST'])
+@login_required
 def confirmar_email():
+    # Se já confirmou, não precisa estar aqui
     if current_user.email_confirmado:
         return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
         codigo = request.form.get('codigo', '').strip()
-        if hash_codigo(codigo) == current_user.codigo:
-            current_user.email_confirmado = True
-            db.session.commit()
-            return redirect(url_for('dashboard'))   
-        else:
-            return render_template('confirmar_email.html', erro='Código incorreto. Verifique seu email e tente novamente.')
+
+        registro = PasswordResetCode.query.filter_by(
+            usuario_id=current_user.id,
+            codigo_hash=hash_codigo(codigo),
+            usado=False
+        ).order_by(PasswordResetCode.criado_em.desc()).first()
+
+        if not registro or registro.expira_em < datetime.utcnow():
+            return render_template(
+                'confirmar_email.html',
+                erro='Código inválido ou expirado. Clique em reenviar.'
+            )
+
+        # Marca como confirmado
+        current_user.email_confirmado = True
+        registro.usado = True
+        db.session.commit()
+
+        return redirect(url_for('dashboard'))
 
     return render_template('confirmar_email.html')
-@app.route('/reenviar-codigo')
-def reenviar_codigo():
-    
-    user=current_user
-    gmail=user.email
-    codigo=f"{secrets.randbelow(1_000_000):06d}"
-    user.codigo=codigo
-    db.session.commit()
-  
-    enviar_email(gmail,'Confirmação de email GodRedação',f"Olá, {user}! Use este código para confirmar seu email: {codigo}")
-    return redirect(url_for("confirmar_email"))
+
 def verificaçoeslogin(user,key):
     
     if not user or not key:
