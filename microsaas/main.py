@@ -966,10 +966,7 @@ def cadastrar():
         erro=verificaçoes(gmail,user,key,confirmar)
         if erro:
             return render_template('cadastro.html',erro=erro)
-        
-        codigo=f"{random.randint(0,999999):06d}"
-        codigo_hash=hash_codigo(codigo)
-        novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,codigo=codigo_hash,email_confirmado=False)
+        novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
         login_user(novo_usuario,remember=True)
