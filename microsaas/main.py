@@ -459,22 +459,28 @@ def env_bool(valor, default=True):
     if valor is None:
         return default
     return str(valor).strip().lower() in ['1', 'true', 't', 'yes', 'y', 'sim', 's']
-
 def enviar_email(destinatario, assunto, corpo):
-
-    api_key = os.getenv("RESEND_API_KEY")
+    api_key = os.getenv("MAILJET_API_KEY")
+    api_secret = os.getenv("MAILJET_API_SECRET")
+    remetente = os.getenv("MAILJET_SENDER_EMAIL")  # o email que você verificou
 
     resposta = requests.post(
-        "https://api.resend.com/emails",
-        headers={
-            "Authorization": f"Bearer {api_key}",
-            "Content-Type": "application/json"
-        },
+        "https://api.mailjet.com/v3.1/send",
+        auth=(api_key, api_secret),
         json={
-            "from": "onboarding@resend.dev",
-            "to": [destinatario],
-            "subject": assunto,
-            "text": corpo
+            "Messages": [
+                {
+                    "From": {
+                        "Email": remetente,
+                        "Name": "GodRedação"
+                    },
+                    "To": [
+                        {"Email": destinatario}
+                    ],
+                    "Subject": assunto,
+                    "TextPart": corpo
+                }
+            ]
         }
     )
 
@@ -972,7 +978,7 @@ def cadastrar():
         login_user(novo_usuario,remember=True)
         try:
             criar_e_enviar_codigo_confirmacao(novo_usuario)
-            return redirect(url_for('confirmar_senha'))
+            return redirect(url_for('confirmar_email'))
         except Exception as e:
             print("erro ao enviar o gmail",e)
             return redirect(url_for("dashboard"))
