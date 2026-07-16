@@ -956,7 +956,6 @@ Se não foi você, ignore este email.
         db.session.commit()
         raise
 
-
 @app.route('/cadastrar',methods=['GET','POST'])
 @limiter.limit("10 per minute")        
 @limiter.limit("5 per day")
