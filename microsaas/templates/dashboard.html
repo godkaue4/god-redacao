@@ -666,7 +666,7 @@ const dados = JSON.parse('{{ redacoes_json | tojson | safe }}');
 if (dados.length > 0) {
     const ctx = document.getElementById('grafico').getContext('2d');
     new Chart(ctx, {
-        type: 'line',
+        type: 'bar',
         data: {
             labels: dados.map((_, i) => 'Redação ' + (i + 1)),
             datasets: [{
