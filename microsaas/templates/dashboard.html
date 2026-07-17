@@ -666,7 +666,7 @@ const dados = JSON.parse('{{ redacoes_json | tojson | safe }}');
 if (dados.length > 0) {
     const ctx = document.getElementById('grafico').getContext('2d');
     new Chart(ctx, {
-        type: 'bar',
+        type: 'line',
         data: {
             labels: dados.map((_, i) => 'Redação ' + (i + 1)),
             datasets: [{
@@ -695,11 +695,11 @@ if (dados.length > 0) {
                 }
             },
             scales: {
-                x: { ticks: { color: '#64748b', font: { size: 6 } }, grid: { color: '#1e2640' } },
+                x: { ticks: { color: '#64748b', font: { size: 11 } }, grid: { color: '#1e2640' } },
                 y: {
-                    ticks: { color: '#64748b', font: { size: 6 } },
+                    ticks: { color: '#64748b', font: { size: 11 } },
                     grid: { color: '#1e2640' },
-                    min: 0, max: 500,
+                    min: 0, max: 1000,
                 }
             }
         }
