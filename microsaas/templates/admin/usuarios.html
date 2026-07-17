@@ -60,7 +60,6 @@
             <tr>
                 <th style="padding-left:22px;">#</th>
                 <th>Usuário</th>
-                <th>Email</th>
                 <th>Plano</th>
                 <th>Correções</th>
                 <th>Cadastro</th>
@@ -80,9 +79,6 @@
                             <div style="font-size:0.72rem;color:var(--muted);">{{ u.correcoes }} correções feitas</div>
                         </div>
                     </div>
-                </td>
-                <td style="color:var(--muted);font-size:0.83rem;">{{ u.email }}</td>
-                <td>
                     {% if u.premium %}
                         <span class="badge badge-purple">Premium</span>
                     {% else %}
@@ -100,7 +96,7 @@
                 </td>
                 <td style="padding-right:22px;">
                     <div style="display:flex;gap:6px;">
-                        <button class="btn btn-sm btn-green" onclick="abrirModal({{ u.id }}, '{{ u.username }}', '{{ u.email }}', {{ u.premium | lower }}, {{ u.is_admin | lower }})">
+                        <button class="btn btn-sm btn-green" onclick="abrirModal({{ u.id }}, '{{ u.username }}', {{ u.premium | lower }}, {{ u.is_admin | lower }})">
                             <i class="fas fa-edit"></i>
                         </button>
                         <form method="POST" action="/admin/deletar_usuario/{{ u.id }}" onsubmit="return confirm('Deletar {{ u.username }}?')" style="display:inline;">
@@ -138,10 +134,7 @@
                 <label>Usuário</label>
                 <input type="text" name="username" id="modal_username" readonly style="opacity:0.6;">
             </div>
-            <div class="modal-field">
-                <label>Email</label>
-                <input type="email" name="email" id="modal_email">
-            </div>
+
             <div class="modal-field">
                 <label>Plano</label>
                 <select name="premium" id="modal_premium">
@@ -192,10 +185,9 @@ function setFiltro(filtro, btn) {
     filtrarTabela();
 }
 
-function abrirModal(id, username, email, premium, isAdmin) {
+function abrirModal(id, username,premium, isAdmin) {
     document.getElementById('modal_id').value = id;
     document.getElementById('modal_username').value = username;
-    document.getElementById('modal_email').value = email;
     document.getElementById('modal_premium').value = String(premium);
     document.getElementById('modal_admin').value = String(isAdmin);
     document.getElementById('modalOverlay').classList.add('open');
