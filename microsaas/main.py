@@ -990,8 +990,6 @@ def cadastrar():
 @app.route('/confirmar-email', methods=['GET', 'POST'])
 def confirmar_email():
     # Se já confirmou, não precisa estar aqui
-    if current_user.email_confirmado:
-        return redirect(url_for('dashboard'))
 
     if request.method == 'POST':
         codigo = request.form.get('codigo', '').strip()
