@@ -391,6 +391,7 @@ RETORNE APENAS JSON VÁLIDO:
 }}
 
 REGRAS:
+-na parte de erros,aponte os erros mais importantes no caso o que mais fez o usuario perder ponto 
 - analise a redação corretamente e aos poucos para evitar erros
 - ignore a quantia de linhas se for acima de 15 pois a redação pode ser grande no caderno mas curta no input 
 - Nota total = soma das competências
