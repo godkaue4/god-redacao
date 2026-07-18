@@ -903,9 +903,6 @@ def deletar(id):
     db.session.commit()
     
     return redirect(url_for("dashboard"))
-
-@app.route('/login', methods=['GET', 'POST'])
-@limiter.limit("10 per minute")
 @app.before_request
 def verificar_email_confirmado():
 
@@ -932,6 +929,9 @@ def verificar_email_confirmado():
         return
 
     return redirect(url_for("confirmar_email"))
+@app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("10 per minute")
+
 def login():
     if request.method == 'POST':
         
