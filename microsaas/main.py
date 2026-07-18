@@ -1019,14 +1019,7 @@ def reenviar_codigo_confirmacao():
 
     if current_user.email_confirmado:
         return redirect(url_for('dashboard'))
-    try:
-        criar_e_enviar_codigo_confirmacao(current_user)
-        flash('Código reenviado com sucesso. Verifique seu email.', 'success')
-        return redirect(url_for('confirmar_email'))
-    except Exception as e:
-        print("erro ao enviar o gmail",e)
-        flash('Erro ao reenviar código. Tente novamente.', 'error')
-        return redirect(url_for('confirmar_email'))
+    return jsonify(criar_e_enviar_codigo_confirmacao(current_user))
 
 def verificaçoeslogin(user,key):
     
