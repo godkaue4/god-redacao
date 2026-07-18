@@ -21,7 +21,6 @@
                 <th>Nota</th>
                 <th>Usuário ID</th>
                 <th>Data</th>
-                <th style="padding-right:22px;">Ações</th>
             </tr>
         </thead>
         <tbody>
@@ -48,14 +47,6 @@
                 <td style="color:var(--muted);">{{ r.usuario_id }}</td>
                 <td style="color:var(--muted);font-size:0.8rem;">
                     {{ r.criada_em.strftime('%d/%m/%Y %H:%M') if r.criada_em else '—' }}
-                </td>
-                <td style="padding-right:22px;">
-                    <form method="POST" action="/deletar_redacao_admin/{{ r.id }}" onsubmit="return confirm('Deletar redação #{{ r.id }}?')">
-                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                        <button type="submit" class="btn btn-sm btn-red">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </form>
                 </td>
             </tr>
             {% else %}
