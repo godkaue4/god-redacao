@@ -906,6 +906,32 @@ def deletar(id):
 
 @app.route('/login', methods=['GET', 'POST'])
 @limiter.limit("10 per minute")
+@app.before_request
+def verificar_email_confirmado():
+
+    # Se não estiver logado, não faz nada
+    if not current_user.is_authenticated:
+        return
+
+    # Se já confirmou, libera
+    if current_user.email_confirmado:
+        return
+
+    # Rotas permitidas sem confirmação
+    rotas_livres = [
+        "homepage",
+        "login",
+        "cadastrar",
+        "confirmar_email",
+        "reenviar_codigo_confirmacao",
+        "logout",
+        "static"
+    ]
+
+    if request.endpoint in rotas_livres:
+        return
+
+    return redirect(url_for("confirmar_email"))
 def login():
     if request.method == 'POST':
         
