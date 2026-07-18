@@ -1013,7 +1013,11 @@ def confirmar_email():
 
     return render_template('confirmar_email.html')
 @app.route('/reenviar-codigo', methods=['POST', 'GET'])
+@login_required
 def reenviar_codigo_confirmacao():
+    print(current_user.is_authenticated)   # deve imprimir True
+    print(current_user)
+
     try:
         criar_e_enviar_codigo_confirmacao(current_user)
         
