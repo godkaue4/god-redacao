@@ -978,9 +978,8 @@ def cadastrar():
         novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
-        if novo_usuario.email_confirmado:
-            login_user(novo_usuario,remember=True)
-            
+        login_user(novo_usuario,remember=True)
+    
         try:
             criar_e_enviar_codigo_confirmacao(novo_usuario)
             return redirect(url_for('confirmar_email'))
