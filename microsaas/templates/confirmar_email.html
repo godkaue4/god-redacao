@@ -368,8 +368,11 @@ footer p { font-size: 0.75rem; color: var(--muted); }
 
   <div class="card-footer">
     Não recebeu o código?
-    <a href="/reenviar-codigo">Reenviar</a>
+  <button type="button" class="btn-link"id="btnreenviar">
+    Reenviar
+  </button>
   </div>
+  <p id="message" style="margin-top: 10px;"></p>
 </div>
 
 <!-- FOOTER -->
@@ -378,42 +381,50 @@ footer p { font-size: 0.75rem; color: var(--muted); }
   <p>Corretor com IA para o ENEM</p>
 </footer>
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const form = document.querySelector('form');
-    const codigoInput = document.getElementById('codigo');
+const btn = document.getElementById("btnreenviar");
+btn.addEventListener("click", async function(){
 
-    form.addEventListener('submit', function(event) {
-      event.preventDefault(); // Evita o envio padrão do formulário
+    btn.disabled = true;
+    btn.innerText = "Enviando...";
 
-      const codigo = codigoInput.value.trim();
+    const csrf = document.querySelector('meta[name="csrf-token"]').content;
 
-      if (codigo === '') {
-        alert('Por favor, insira o código de verificação.');
-        return;
-      }
+    try{
 
-      fetch('/reenviar-codigo', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': '{{ csrf_token() }}' 
-        },
-        body: JSON.stringify({ codigo: codigo })
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert('Código reenviado com sucesso. Verifique seu email.');
-        } else {
-          alert('Erro ao reenviar código. Tente novamente.');
+        const resposta = await fetch("/reenviar-codigo",{
+            method:"POST",
+            headers:{
+                "X-CSRFToken": csrf
+            }
+        });
+
+        const dados = await resposta.json();
+
+        const msg = document.getElementById("mensagem");
+
+        if(dados.success){
+
+            msg.style.color = "#22c55e";
+            msg.innerHTML = dados.message;
+
+        }else{
+
+            msg.style.color = "#ef4444";
+            msg.innerHTML = dados.message;
+
         }
-      })
-      .catch(error => {
-        console.error('Erro:', error);
-        alert('Erro ao reenviar código. Tente novamente.');
-      });
-    });
-  });
+
+    }catch(e){
+
+        document.getElementById("mensagem").innerHTML =
+        "Erro de conexão.";
+
+    }
+
+    btn.disabled = false;
+    btn.innerText = "Reenviar";
+
+});
 </script>
 </body>
 </html>

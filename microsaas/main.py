@@ -989,8 +989,6 @@ def cadastrar():
     return render_template('cadastro.html')
 @app.route('/confirmar-email', methods=['GET', 'POST'])
 def confirmar_email():
-    # Se já confirmou, não precisa estar aqui
-
     if request.method == 'POST':
         codigo = request.form.get('codigo', '').strip()
 
@@ -1016,13 +1014,9 @@ def confirmar_email():
     return render_template('confirmar_email.html')
 @app.route('/reenviar-codigo', methods=['POST', 'GET'])
 def reenviar_codigo_confirmacao():
-    dados=request.form
-    email=dados.get('email')
-    if not email:
-        return jsonify({'success': False, 'error': 'Email não fornecido'}), 400
-    usuario=Usuarios.query.filter_by(email=email).first()
     try:
-        criar_e_enviar_codigo_confirmacao(usuario)
+        criar_e_enviar_codigo_confirmacao(current_user)
+        
         return jsonify({'success': True, 'message': 'Código reenviado com sucesso olhe sua caixa de spam'})
     except Exception as e:
         print("erro ao enviar o gmail",e)
