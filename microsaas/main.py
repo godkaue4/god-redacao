@@ -920,9 +920,7 @@ def login():
             return render_template('login.html',erro=erro)
         if not user:
             return render_template('login.html',erro='Usuário não encontrado')
-        if user.email_confirmado:
-            login_user(user,remember=True)        
-            return redirect(url_for('dashboard'))
+        login_user(user,remember=True)        
         if not user.email_confirmado:
             return redirect(url_for('confirmar_email'))
     return render_template('login.html')
