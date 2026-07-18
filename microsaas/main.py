@@ -989,7 +989,6 @@ def cadastrar():
             return redirect(url_for("dashboard"))
     return render_template('cadastro.html')
 @app.route('/confirmar-email', methods=['GET', 'POST'])
-@login_required
 def confirmar_email():
     # Se já confirmou, não precisa estar aqui
     if current_user.email_confirmado:
@@ -1020,8 +1019,6 @@ def confirmar_email():
     return render_template('confirmar_email.html')
 @app.route('/reenviar-codigo', methods=['POST'])
 def reenviar_codigo_confirmacao():
-    if not current_user.is_authenticated:
-        return redirect(url_for('login'))
 
     if current_user.email_confirmado:
         return redirect(url_for('dashboard'))
