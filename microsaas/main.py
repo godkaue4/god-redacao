@@ -1037,7 +1037,7 @@ def confirmar_email():
         return redirect(url_for('dashboard'))
 
     return render_template('confirmar_email.html')
-@app.route('/reenviar-codigo', methods=['POST', 'GET'])
+@app.route('/reenviar-codigo', methods=['POST'])
 @login_required
 def reenviar_codigo_confirmacao():
     print(current_user.is_authenticated)   # deve imprimir True
