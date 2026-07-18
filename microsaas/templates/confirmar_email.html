@@ -377,6 +377,43 @@ footer p { font-size: 0.75rem; color: var(--muted); }
   <div class="logo">God<span>Redação</span></div>
   <p>Corretor com IA para o ENEM</p>
 </footer>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const codigoInput = document.getElementById('codigo');
 
+    form.addEventListener('submit', function(event) {
+      event.preventDefault(); // Evita o envio padrão do formulário
+
+      const codigo = codigoInput.value.trim();
+
+      if (codigo === '') {
+        alert('Por favor, insira o código de verificação.');
+        return;
+      }
+
+      fetch('/reenviar-codigo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token() }}' 
+        },
+        body: JSON.stringify({ codigo: codigo })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          alert('Código reenviado com sucesso. Verifique seu email.');
+        } else {
+          alert('Erro ao reenviar código. Tente novamente.');
+        }
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        alert('Erro ao reenviar código. Tente novamente.');
+      });
+    });
+  });
+</script>
 </body>
 </html>

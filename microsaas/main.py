@@ -1014,12 +1014,19 @@ def confirmar_email():
         return redirect(url_for('dashboard'))
 
     return render_template('confirmar_email.html')
-@app.route('/reenviar-codigo', methods=['POST'])
+@app.route('/reenviar-codigo', methods=['POST', 'GET'])
 def reenviar_codigo_confirmacao():
-
-    if current_user.email_confirmado:
-        return redirect(url_for('dashboard'))
-    return jsonify(criar_e_enviar_codigo_confirmacao(current_user))
+    dados=request.form
+    email=dados.get('email')
+    if not email:
+        return jsonify({'success': False, 'error': 'Email não fornecido'}), 400
+    usuario=Usuarios.query.filter_by(email=email).first()
+    try:
+        criar_e_enviar_codigo_confirmacao(usuario)
+        return jsonify({'success': True, 'message': 'Código reenviado com sucesso olhe sua caixa de spam'})
+    except Exception as e:
+        print("erro ao enviar o gmail",e)
+        return jsonify({'error': 'Erro ao reenviar código. Tente novamente.'})
 
 def verificaçoeslogin(user,key):
     
