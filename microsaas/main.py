@@ -395,6 +395,7 @@ REGRAS:
 - ignore a quantia de linhas se for acima de 15 pois a redação pode ser grande no caderno mas curta no input 
 - Nota total = soma das competências
 - NÃO invente coisas fora do texto
+- nao indique erros de digitação como erros da redação, erros como espaçamento incorreto antes ou depois da virgula nao sao erros da redaçao
 - ignore erros de espaços pequenos no meio do texto entre palavras ou vírgulas,mas corrija erros gritantes de ortografia e gramática
 - Seja específico
 - de o valor correto para cada competência sem erros, se a redação tiver um bom repertório mas uma argumentação fraca, a competência de repertório deve ser alta e a de argumentação baixa
