@@ -920,8 +920,11 @@ def login():
             return render_template('login.html',erro=erro)
         if not user:
             return render_template('login.html',erro='Usuário não encontrado')
-        login_user(user,remember=True)        
-        return redirect(url_for('dashboard'))
+        if user.email_confirmado:
+            login_user(user,remember=True)        
+            return redirect(url_for('dashboard'))
+        if not user.email_confirmado:
+            return redirect(url_for('confirmar_email'))
     return render_template('login.html')
 def criar_e_enviar_codigo_confirmacao(usuario):
     """Igual ao criar_e_enviar_codigo, mas para confirmação de email no cadastro."""
@@ -975,7 +978,9 @@ def cadastrar():
         novo_usuario=Usuarios(email=gmail,username=user,senha=hashsenha,email_confirmado=False)
         db.session.add(novo_usuario)
         db.session.commit()
-        login_user(novo_usuario,remember=True)
+        if novo_usuario.email_confirmado:
+            login_user(novo_usuario,remember=True)
+            
         try:
             criar_e_enviar_codigo_confirmacao(novo_usuario)
             return redirect(url_for('confirmar_email'))
@@ -1013,7 +1018,7 @@ def confirmar_email():
         return redirect(url_for('dashboard'))
 
     return render_template('confirmar_email.html')
-@app.route('/reenviar-codigo-confirmacao', methods=['POST'])
+@app.route('/reenviar-codigo', methods=['POST'])
 def reenviar_codigo_confirmacao():
     if not current_user.is_authenticated:
         return redirect(url_for('login'))
