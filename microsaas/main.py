@@ -912,7 +912,7 @@ def verificar_email_confirmado():
 
     # Se já confirmou, libera
     if current_user.email_confirmado:
-        return redirect(url_for('dashboard'))
+        return 
 
     # Rotas permitidas sem confirmação
     rotas_livres = [
