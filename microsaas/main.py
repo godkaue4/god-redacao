@@ -912,7 +912,7 @@ def verificar_email_confirmado():
 
     # Se já confirmou, libera
     if current_user.email_confirmado:
-        return
+        return redirect(url_for('dashboard'))
 
     # Rotas permitidas sem confirmação
     rotas_livres = [
@@ -947,8 +947,7 @@ def login():
         if not user:
             return render_template('login.html',erro='Usuário não encontrado')
         login_user(user,remember=True)        
-        if not user.email_confirmado:
-            return redirect(url_for('confirmar_email'))
+
     return render_template('login.html')
 def criar_e_enviar_codigo_confirmacao(usuario):
     """Igual ao criar_e_enviar_codigo, mas para confirmação de email no cadastro."""
